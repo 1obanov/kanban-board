@@ -1,0 +1,15 @@
+@import "tailwindcss";
+
+@theme {
+  --breakpoint-sm: 26.875rem;
+  --breakpoint-2xl: 90rem;
+}
+
+.react-datepicker-wrapper {
+  width: 100%;
+}
+
+.react-datepicker__input-container {
+  display: flex !important;
+  align-items: center;
+}

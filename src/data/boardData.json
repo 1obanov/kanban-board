@@ -1,0 +1,103 @@
+{
+  "columns": [
+    { "id": "todo", "title": "To Do", "taskIds": ["t1", "t2"] },
+    { "id": "in-progress", "title": "In Progress", "taskIds": ["t3"] },
+    { "id": "in-code-review", "title": "In Code Review", "taskIds": [] },
+    { "id": "in-test", "title": "In Test", "taskIds": ["t4"] },
+    { "id": "done", "title": "Done", "taskIds": ["t5"] }
+  ],
+  "tasks": [
+    {
+      "id": "t1",
+      "title": "Set up project",
+      "description": "Initialize repository and install dependencies",
+      "assignees": [
+        {
+          "id": "bob",
+          "name": "Bob Smith",
+          "email": "bob.smith@gmail.com",
+          "avatar": "https://i.pravatar.cc/150?img=10"
+        }
+      ],
+      "labels": ["frontend", "urgent"],
+      "priority": "high",
+      "dueDate": "2026-09-18T00:00:00.000Z"
+    },
+    {
+      "id": "t2",
+      "title": "Design homepage",
+      "description": "Create layout in Figma",
+      "assignees": [
+        {
+          "id": "carol",
+          "name": "Carol Davis",
+          "email": "carol.davis@gmail.com",
+          "avatar": "https://i.pravatar.cc/150?img=28"
+        },
+        {
+          "id": "alice",
+          "name": "Alice Johnson",
+          "email": "alice.johnson@gmail.com",
+          "avatar": "https://i.pravatar.cc/150?img=5"
+        }
+      ],
+      "labels": ["design", "frontend"],
+      "priority": "medium",
+      "dueDate": "2026-02-10T00:00:00.000Z"
+    },
+    {
+      "id": "t3",
+      "title": "Markup homepage",
+      "description": "Create layout in HTML/CSS",
+      "assignees": [
+        {
+          "id": "john",
+          "name": "John Williams",
+          "email": "john.williams@gmail.com",
+          "avatar": "https://i.pravatar.cc/150?img=12"
+        }
+      ],
+      "labels": ["frontend"],
+      "priority": "low",
+      "dueDate": "2026-04-04T00:00:00.000Z"
+    },
+    {
+      "id": "t4",
+      "title": "API integration",
+      "description": "Connect frontend with backend",
+      "assignees": [
+        {
+          "id": "mary",
+          "name": "Mary Brown",
+          "email": "mary.brown@gmail.com",
+          "avatar": "https://i.pravatar.cc/150?img=16"
+        },
+        {
+          "id": "carol",
+          "name": "Carol Davis",
+          "email": "carol.davis@gmail.com",
+          "avatar": "https://i.pravatar.cc/150?img=28"
+        }
+      ],
+      "labels": ["backend", "bug"],
+      "priority": "high",
+      "dueDate": "2026-06-12T00:00:00.000Z"
+    },
+    {
+      "id": "t5",
+      "title": "Deploy project",
+      "description": "Deploy application to production server",
+      "assignees": [
+        {
+          "id": "john",
+          "name": "John Williams",
+          "email": "john.williams@gmail.com",
+          "avatar": "https://i.pravatar.cc/150?img=12"
+        }
+      ],
+      "labels": ["feature"],
+      "priority": "medium",
+      "dueDate": "2026-08-01T00:00:00.000Z"
+    }
+  ]
+}
