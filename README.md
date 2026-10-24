@@ -21,9 +21,10 @@ Explore the live demo of the **Kanban Board** [here](https://1obanov.github.io/k
 - React
 - Redux Toolkit
 - React Router
-- JavaScript (ES6+)
+- TypeScript
 - Tailwind CSS
 - Headless UI
+- Vite
 
 ### Installation
 
