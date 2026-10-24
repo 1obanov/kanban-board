@@ -1,7 +1,19 @@
+export type Label = {
+  id: string;
+  name: string;
+  color: string;
+};
+
+export type LabelOption = {
+  value: Label["id"];
+  label: Label["name"];
+  color: Label["color"];
+};
+
 /**
  * Mock data for task labels
  */
-const list = [
+const list: Label[] = [
   {
     id: "frontend",
     name: "Frontend",
@@ -34,6 +46,12 @@ const list = [
   },
 ];
 
+const options: LabelOption[] = list.map(({ id, name, color }) => ({
+  value: id,
+  label: name,
+  color,
+}));
+
 /**
  * Labels data helper
  * - list: full label objects
@@ -41,9 +59,5 @@ const list = [
  */
 export const labels = {
   list,
-  options: list.map(({ id, name, color }) => ({
-    value: id,
-    label: name,
-    color,
-  })),
+  options,
 };

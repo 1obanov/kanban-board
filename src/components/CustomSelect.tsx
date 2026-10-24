@@ -1,13 +1,37 @@
-import React from "react";
-import Select, { components } from "react-select";
 import { Check } from "lucide-react";
+import React, { type ReactNode } from "react";
+import Select, {
+  components,
+  type GroupBase,
+  type MultiValue,
+  type OptionProps,
+  type Props,
+  type SingleValue,
+  type ValueContainerProps,
+} from "react-select";
+
+type SelectOption = {
+  label: string;
+  value: string;
+  color?: string;
+};
+
+type OptionType = "assignees" | "labels" | "priority";
+
+type CustomOptionProps = OptionProps<
+  SelectOption,
+  boolean,
+  GroupBase<SelectOption>
+> & {
+  optionType: OptionType;
+};
 
 /**
  * Custom Option renderer for react-select
  * - assignees: shows label + checkbox
  * - labels / priority: shows color dot + label
  */
-export const CustomOption = ({ optionType, ...props }) => {
+export const CustomOption = ({ optionType, ...props }: CustomOptionProps) => {
   if (optionType === "assignees") {
     // Checkbox option for assignees
     return (
@@ -39,47 +63,74 @@ export const CustomOption = ({ optionType, ...props }) => {
   );
 };
 
+type CustomValueContainerProps = ValueContainerProps<
+  SelectOption,
+  boolean,
+  GroupBase<SelectOption>
+> & {
+  icon?: ReactNode;
+};
+
 /**
  * Custom ValueContainer
  * - shows icon (if provided)
  * - shows selected value for single select
  * - shows placeholder + count for multi select
  */
-const ValueContainer = ({ children, getValue, ...props }) => {
-  const length = getValue().length;
+const ValueContainer = ({
+  children,
+  getValue,
+  selectProps,
+  icon,
+  ...props
+}: CustomValueContainerProps) => {
   const selected = getValue()[0];
+  const length = getValue().length;
 
   return (
-    <components.ValueContainer {...props}>
-      {/* Optional icon on the left */}
-      {props.selectProps.icon && (
-        <span style={{ marginRight: "4px" }}>{props.selectProps.icon}</span>
-      )}
-      {/* Color dot for single select */}
-      {!props.selectProps.isMulti && selected && (
+    <components.ValueContainer
+      {...props}
+      getValue={getValue}
+      selectProps={selectProps}
+    >
+      {icon && <span className="mr-1">{icon}</span>}
+
+      {!selectProps.isMulti && selected?.color && (
         <span
-          className=" w-3 h-3 rounded-[50%]"
-          style={{
-            backgroundColor: selected.color,
-          }}
-        ></span>
+          className="h-3 w-3 rounded-full"
+          style={{ backgroundColor: selected.color }}
+        />
       )}
-      {/* Label for single select */}
-      {!props.selectProps.isMulti && selected && (
-        <>
-          <span>{selected.label}</span>
-        </>
-      )}
-      {/* Placeholder with count for multi select */}
-      {!props.selectProps.inputValue &&
-        props.selectProps.isMulti &&
-        `${props.selectProps.placeholder}${length > 0 ? ` (${length})` : ""}`}
+
+      {!selectProps.isMulti && selected && <span>{selected.label}</span>}
+
+      {!selectProps.inputValue &&
+        selectProps.isMulti &&
+        `${selectProps.placeholder ?? ""}${length > 0 ? ` (${length})` : ""}`}
+
       {React.Children.map(children, (child) =>
-        child.type === components.Input ? child : null
+        React.isValidElement(child) && child.type === components.Input
+          ? child
+          : null,
       )}
     </components.ValueContainer>
   );
 };
+
+interface CustomSelectProps extends Omit<
+  Props<SelectOption, boolean, GroupBase<SelectOption>>,
+  "options" | "value" | "onChange" | "isMulti" | "components"
+> {
+  options: SelectOption[];
+  value?: SingleValue<SelectOption> | MultiValue<SelectOption>;
+  onChange?: (
+    value: SingleValue<SelectOption> | MultiValue<SelectOption>,
+  ) => void;
+  placeholder?: string;
+  optionType: OptionType;
+  isMulti?: boolean;
+  icon?: ReactNode;
+}
 
 /**
  * Reusable Custom Select component
@@ -91,29 +142,24 @@ const CustomSelect = ({
   placeholder = "Select...",
   optionType,
   isMulti = true,
+  icon,
   ...rest
-}) => {
-  // Default value for single select if value is not provided
-  const defaultValue =
-    !isMulti && !value && options.length > 0 ? options[0] : value;
-
-  const handleChange = (selected) => {
-    if (onChange) {
-      onChange(selected);
-    }
-  };
+}: CustomSelectProps) => {
+  const selectedValue =
+    !isMulti && value == null && options.length > 0 ? options[0] : value;
 
   return (
-    <Select
-      value={defaultValue}
-      onChange={handleChange}
+    <Select<SelectOption, boolean, GroupBase<SelectOption>>
+      {...rest}
+      value={selectedValue}
+      onChange={(newValue) => onChange?.(newValue)}
       isMulti={isMulti}
       options={options}
       placeholder={placeholder}
       hideSelectedOptions={false}
       components={{
         Option: (props) => <CustomOption {...props} optionType={optionType} />,
-        ValueContainer,
+        ValueContainer: (props) => <ValueContainer {...props} icon={icon} />,
       }}
       styles={{
         valueContainer: (provided) => ({
@@ -146,11 +192,7 @@ const CustomSelect = ({
         option: (provided, state) => ({
           ...provided,
           fontSize: "14px",
-          backgroundColor: state.isFocused
-            ? "#f1f5f9"
-            : state.isSelected
-            ? "white"
-            : "white",
+          backgroundColor: state.isFocused ? "#f1f5f9" : "white",
           color: "black",
           textTransform: "capitalize",
           cursor: "pointer",
@@ -169,7 +211,6 @@ const CustomSelect = ({
           backgroundColor: "#ffffff",
         }),
       }}
-      {...rest}
     />
   );
 };

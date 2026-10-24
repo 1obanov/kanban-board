@@ -1,10 +1,13 @@
-import { useEffect, useRef, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { removeLabel } from "../boardActions";
-import { addLabel } from "../boardSlice";
 import { Sketch } from "@uiw/react-color";
 import { Tag, X } from "lucide-react";
+import { type FormEvent,useEffect, useRef, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+
 import Button from "../../../components/Button";
+import type { Label } from "../../../data/labels";
+import type { AppDispatch, RootState } from "../../../store";
+import { addLabel } from "../boardSlice";
+import { removeLabel } from "../boardThunks";
 
 /**
  * Tab for managing labels in board settings
@@ -13,17 +16,18 @@ import Button from "../../../components/Button";
  * - Supports color picker
  */
 function LabelsTab() {
-  const labelsData = useSelector((state) => state.board.labelsData);
-  const dispatch = useDispatch();
+  const labelsData = useSelector((state: RootState) => state.board.labelsData);
+
+  const dispatch = useDispatch<AppDispatch>();
 
   const [labelName, setLabelName] = useState("");
   const [labelNameError, setLabelNameError] = useState("");
   const [color, setColor] = useState("#ff0000");
   const [displayColorPicker, setDisplayColorPicker] = useState(false);
-  const pickerRef = useRef(null);
+  const pickerRef = useRef<HTMLDivElement>(null);
 
   /** Add new label */
-  const handleAddLabel = (e) => {
+  const handleAddLabel = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const labelId = labelName
@@ -31,6 +35,11 @@ function LabelsTab() {
       .toLowerCase()
       .replace(/\s+/g, "-")
       .replace(/[^a-z0-9-]/g, "");
+
+    if (!labelId) {
+      setLabelNameError("Please enter a valid label name");
+      return;
+    }
 
     // Check if label already exists
     const labelExists = labelsData.list.some((label) => label.id === labelId);
@@ -40,9 +49,9 @@ function LabelsTab() {
     }
 
     // Create new label
-    const newLabel = {
+    const newLabel: Label = {
       id: labelId,
-      name: labelName,
+      name: labelName.trim(),
       color,
     };
 
@@ -50,18 +59,23 @@ function LabelsTab() {
 
     // Reset form
     setLabelName("");
+    setLabelNameError("");
     setColor("#ff0000");
+    setDisplayColorPicker(false);
   };
 
   /** Delete a label */
-  const handleDeleteLabel = (labelId) => {
+  const handleDeleteLabel = (labelId: Label["id"]) => {
     dispatch(removeLabel(labelId));
   };
 
   // Close color picker when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (pickerRef.current && !pickerRef.current.contains(event.target)) {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        pickerRef.current &&
+        !pickerRef.current.contains(event.target as Node)
+      ) {
         setDisplayColorPicker(false);
       }
     };
@@ -74,7 +88,7 @@ function LabelsTab() {
   return (
     <div>
       <h3 className="font-medium capitalize mb-2">Labels</h3>
-      <form className="space-y-3 mb-3">
+      <form onSubmit={handleAddLabel} className="space-y-3 mb-3">
         <div className="grid md:grid-cols-2 gap-2">
           <div>
             <label
@@ -115,7 +129,6 @@ function LabelsTab() {
               Color
             </label>
 
-            {/* Контейнер цвета */}
             <div className="w-full h-9.5 rounded-md bg-gray-100 border-1 border-slate-300 p-2">
               <span
                 className="block w-full h-full cursor-pointer rounded-sm border-1 border-black"
@@ -124,26 +137,26 @@ function LabelsTab() {
               />
             </div>
 
-            {/* Пикер */}
-            {displayColorPicker && (
-              <div ref={pickerRef} className="absolute z-10 mt-1">
-                <Sketch
-                  color={color}
-                  onChange={(newColor) => setColor(newColor.hex)}
-                />
-              </div>
-            )}
+            <div ref={pickerRef} className="relative">
+              {displayColorPicker && (
+                <div className="absolute z-10 mt-1">
+                  <Sketch
+                    color={color}
+                    onChange={(newColor) => setColor(newColor.hex)}
+                  />
+                </div>
+              )}
+            </div>
           </div>
         </div>
         <div>
           <Button
-            type="button"
+            type="submit"
             className={`text-sm flex items-center gap-2 px-2 py-2 
     ${
       !labelName.trim() ? "opacity-50 hover:bg-slate-900 !cursor-default " : ""
     }`}
             padding={"px-2 py-2"}
-            onClick={handleAddLabel}
             disabled={!labelName.trim()}
           >
             <Tag size={14} />

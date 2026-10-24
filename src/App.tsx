@@ -1,11 +1,12 @@
+import { Settings } from "lucide-react";
 import { useState } from "react";
+
 import Button from "./components/Button";
-import SettingsDialog from "./features/board/SettingsDialog/SettingsDialog";
+import SideBar from "./components/SideBar";
 import Board from "./features/board/components/Board";
+import SettingsDialog from "./features/board/SettingsDialog/SettingsDialog";
 import FiltersPanel from "./features/filters/components/FiltersPanel";
 import AddTaskDialog from "./features/task/components/AddTaskDialog";
-import { Settings } from "lucide-react";
-import SideBar from "./components/SideBar";
 
 function App() {
   const [isNewTaskOpen, setIsNewTaskOpen] = useState(false);

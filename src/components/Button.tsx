@@ -1,4 +1,17 @@
 import classNames from "classnames";
+import type { ButtonHTMLAttributes, ReactNode } from "react";
+
+interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  children: ReactNode;
+  className?: string;
+  fontSize?: string;
+  bgColor?: string;
+  border?: string;
+  textColor?: string;
+  borderRadius?: string;
+  padding?: string;
+  hoverBgColor?: string;
+}
 
 /**
  * Reusable Button component
@@ -15,7 +28,7 @@ const Button = ({
   padding = "px-4 py-2.5",
   hoverBgColor = "hover:bg-slate-800",
   ...props
-}) => {
+}: ButtonProps) => {
   return (
     <button
       onClick={onClick}
@@ -24,11 +37,11 @@ const Button = ({
         fontSize,
         bgColor,
         textColor,
+        border,
         borderRadius,
         padding,
         hoverBgColor,
         className,
-        border
       )}
       {...props}
     >

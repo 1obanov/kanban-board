@@ -1,11 +1,17 @@
-import { useSelector, useDispatch } from "react-redux";
-import Column from "./Column";
+import {
+  DragDropContext,
+  Draggable,
+  Droppable,
+  type DropResult,
+} from "@hello-pangea/dnd";
+import { useDispatch,useSelector } from "react-redux";
+
+import type { AppDispatch, RootState } from "../../../store";
 import TaskCard from "../../task/components/TaskCard";
-import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { moveTask } from "../../task/taskSlice";
-import { moveTaskInColumn } from "../boardSlice";
 import { selectFilteredTasks } from "../../task/taskSelectors";
-import { EllipsisVertical } from "lucide-react";
+import { moveTaskInColumn } from "../boardSlice";
+import BoardColumn from "./BoardColumn";
+import ListColumn from "./ListColumn";
 
 /**
  * Kanban Board component
@@ -13,24 +19,16 @@ import { EllipsisVertical } from "lucide-react";
  * - Renders in board or list view based on state
  */
 function Board() {
-  const columns = useSelector((state) => state.board.columns);
-  const viewMode = useSelector((state) => state.board.viewMode);
+  const columns = useSelector((state: RootState) => state.board.columns);
+  const viewMode = useSelector((state: RootState) => state.board.viewMode);
   const tasks = useSelector(selectFilteredTasks);
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
 
   /** Handle drag & drop end */
-  const handleDragEnd = (result) => {
+  const handleDragEnd = (result: DropResult) => {
     const { source, destination, draggableId } = result;
-    if (!destination) return;
 
-    // Update task's column in taskSlice
-    dispatch(
-      moveTask({
-        taskId: draggableId,
-        destinationColumnId: destination.droppableId,
-        destinationIndex: destination.index,
-      })
-    );
+    if (!destination) return;
 
     // Update taskIds array in boardSlice
     dispatch(
@@ -39,12 +37,12 @@ function Board() {
         sourceColumnId: source.droppableId,
         destinationColumnId: destination.droppableId,
         destinationIndex: destination.index,
-      })
+      }),
     );
   };
 
   /** Utility: get task object by ID considering filters */
-  const getTaskById = (id) => tasks.find((t) => t.id === id);
+  const getTaskById = (id: string) => tasks.find((t) => t.id === id);
 
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
@@ -55,7 +53,7 @@ function Board() {
             {columns.map((column) => (
               <Droppable key={column.id} droppableId={column.id}>
                 {(provided) => (
-                  <Column
+                  <BoardColumn
                     title={column.title}
                     countTasks={column.taskIds.length}
                     ref={provided.innerRef}
@@ -83,7 +81,7 @@ function Board() {
                       );
                     })}
                     {provided.placeholder}
-                  </Column>
+                  </BoardColumn>
                 )}
               </Droppable>
             ))}
@@ -93,22 +91,16 @@ function Board() {
           <div className="h-full flex flex-col gap-4 overflow-y-auto">
             {columns.map((column) => {
               // Only show tasks that pass filters
-              const colTasks = column.taskIds.map(getTaskById).filter(Boolean);
+              const colTasks = column.taskIds
+                .map(getTaskById)
+                .filter((task) => task !== undefined);
 
               return (
-                <div key={column.id} className="bg-slate-100 p-3 rounded-lg">
-                  <div className="pb-3 mb-3 border-b border-slate-300 flex items-center justify-between">
-                    <h3 className="flex items-center gap-1 text-sm capitalize">
-                      {column.title}
-                      <span className="flex items-center justify-center w-5 h-5 text-xs rounded-[50%] bg-blue-100 text-blue-600">
-                        {colTasks.length}
-                      </span>
-                    </h3>
-                    <button className="cursor-pointer p-1">
-                      <EllipsisVertical size={14} />
-                    </button>
-                  </div>
-
+                <ListColumn
+                  key={column.id}
+                  title={column.title}
+                  countTasks={colTasks.length}
+                >
                   <Droppable droppableId={column.id}>
                     {(provided) => (
                       <div
@@ -128,7 +120,7 @@ function Board() {
                                 {...provided.draggableProps}
                                 {...provided.dragHandleProps}
                               >
-                                <TaskCard task={task} viewMode={viewMode} />
+                                <TaskCard task={task} />
                               </div>
                             )}
                           </Draggable>
@@ -137,7 +129,7 @@ function Board() {
                       </div>
                     )}
                   </Droppable>
-                </div>
+                </ListColumn>
               );
             })}
           </div>

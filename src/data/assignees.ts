@@ -1,7 +1,19 @@
+export type Assignee = {
+  id: string;
+  name: string;
+  email: string;
+  avatar: string;
+};
+
+export type AssigneeOption = {
+  value: Assignee["id"];
+  label: Assignee["name"];
+};
+
 /**
  * Mock data for task assignees
  */
-const list = [
+const list: Assignee[] = [
   {
     id: "bob",
     name: "Bob Smith",
@@ -34,6 +46,11 @@ const list = [
   },
 ];
 
+const options: AssigneeOption[] = list.map(({ id, name }) => ({
+  value: id,
+  label: name,
+}));
+
 /**
  * Assignees data helper
  * - list: full assignee objects
@@ -41,5 +58,5 @@ const list = [
  */
 export const assignees = {
   list,
-  options: list.map(({ id, name }) => ({ value: id, label: name })),
+  options,
 };

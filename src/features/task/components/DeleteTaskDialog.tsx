@@ -1,11 +1,25 @@
 import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
 import { TriangleAlert, X } from "lucide-react";
+
 import Button from "../../../components/Button";
+import type { Task } from "../../../types/board";
+
+type DeleteTaskDialogProps = {
+  taskTitle: Task["title"];
+  handleDeleteTask: () => void;
+  isDeleteOpen: boolean;
+  onClose: () => void;
+};
 
 /**
  * DeleteTaskDialog component
  */
-function DeleteTaskDialog({ taskTitle, handleDeleteTask, isDeleteOpen, onClose }) {
+function DeleteTaskDialog({
+  taskTitle,
+  handleDeleteTask,
+  isDeleteOpen,
+  onClose,
+}: DeleteTaskDialogProps) {
   return (
     <Dialog
       open={isDeleteOpen}

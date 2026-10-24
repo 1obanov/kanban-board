@@ -1,51 +1,64 @@
-import { useEffect, useState } from "react";
-import CustomSelect from "../../../components/CustomSelect";
-import Button from "../../../components/Button";
-import { X, Calendar } from "lucide-react";
-import DatePicker from "react-datepicker";
-import { Dialog, DialogPanel, DialogBackdrop } from "@headlessui/react";
-import { useDispatch, useSelector } from "react-redux";
-import { updateTask } from "../taskSlice";
-
 import "react-datepicker/dist/react-datepicker.css";
 
+import { Dialog, DialogBackdrop,DialogPanel } from "@headlessui/react";
+import { Calendar,X } from "lucide-react";
+import { type FormEvent,useState } from "react";
+import DatePicker from "react-datepicker";
+import { useDispatch, useSelector } from "react-redux";
+
+import Button from "../../../components/Button";
+import CustomSelect from "../../../components/CustomSelect";
+import type { Assignee } from "../../../data/assignees";
+import type { PriorityOption } from "../../../data/priorities";
+import type { AppDispatch, RootState } from "../../../store";
+import type { Task } from "../../../types/board";
+import { addTaskToColumn } from "../../board/boardSlice";
+import { addTask } from "../taskSlice";
+
+type AddTaskDialogProps = {
+  isNewTaskOpen: boolean;
+  onClose: () => void;
+};
+
 /**
- * UpdateTaskDialog component
+ * AddTaskDialog component
  *
- * Modal dialog responsible for editing task details and dispatching task updates
+ * Modal dialog for creating a new task and assigning it to a board column.
  */
-function UpdateTaskDialog({ task, isEditOpen, onClose }) {
-  const assigneesData = useSelector((state) => state.board.assigneesData);
-  const labelsData = useSelector((state) => state.board.labelsData);
-  const prioritiesData = useSelector((state) => state.board.prioritiesData);
+function AddTaskDialog({ isNewTaskOpen, onClose }: AddTaskDialogProps) {
+  const assigneesData = useSelector(
+    (state: RootState) => state.board.assigneesData,
+  );
+  const labelsData = useSelector((state: RootState) => state.board.labelsData);
+  const prioritiesData = useSelector(
+    (state: RootState) => state.board.prioritiesData,
+  );
 
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
 
-  const [title, setTitle] = useState(task.title);
+  const [title, setTitle] = useState("");
   const [titleError, setTitleError] = useState("");
-  const [description, setDescription] = useState(task.description);
-  const [dueDate, setDueDate] = useState(
-    task.dueDate ? new Date(task.dueDate) : new Date()
+  const [description, setDescription] = useState("");
+  const [dueDate, setDueDate] = useState(new Date());
+  const [selectedPriority, setSelectedPriority] = useState<PriorityOption>(
+    prioritiesData.options[0],
   );
+  const [selectedLabels, setSelectedLabels] = useState<string[]>([]);
+  const [selectedAssignees, setSelectedAssignees] = useState<Assignee[]>([]);
 
-  // Initial priority object based on task value
-  const priority = prioritiesData.options.find(
-    (option) => option.value === task.priority
-  );
-
-  const [selectedPriority, setSelectedPriority] = useState(priority);
-  const [selectedLabels, setSelectedLabels] = useState(task.labels);
-  const [selectedAssignees, setSelectedAssignees] = useState(task.assignees);
-
-  // Toggle label selection by id
-  const toggleLabel = (id) => {
+  /**
+   * Toggle label selection by id
+   */
+  const toggleLabel = (id: string): void => {
     setSelectedLabels((prev) =>
-      prev.includes(id) ? prev.filter((el) => el !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((el) => el !== id) : [...prev, id],
     );
   };
 
-  // Toggle assignee selection by object
-  const toggleAssignee = (assignee) => {
+  /**
+   * Toggle assignee selection
+   */
+  const toggleAssignee = (assignee: Assignee): void => {
     setSelectedAssignees((prev) => {
       const exists = prev.some((el) => el.id === assignee.id);
 
@@ -55,8 +68,10 @@ function UpdateTaskDialog({ task, isEditOpen, onClose }) {
     });
   };
 
-  // Submit updated task data
-  const handleUpdateTask = (e) => {
+  /**
+   * Validate form and create a new task
+   */
+  const handleAddTask = (e: FormEvent<HTMLFormElement>): void => {
     e.preventDefault();
 
     if (!title.trim()) {
@@ -66,32 +81,32 @@ function UpdateTaskDialog({ task, isEditOpen, onClose }) {
 
     setTitleError("");
 
-    const updatedFields = {
-      title,
+    const newTask: Task = {
+      id: crypto.randomUUID(),
+      title: title.trim(),
       description,
       assignees: selectedAssignees,
       labels: selectedLabels,
       priority: selectedPriority.value,
-      dueDate: dueDate ? dueDate.toISOString() : null,
+      dueDate: dueDate.toISOString(),
     };
 
-    // Update task in store
-    dispatch(updateTask({ id: task.id, updatedFields }));
+    dispatch(addTask(newTask));
+    dispatch(addTaskToColumn({ taskId: newTask.id, columnId: "todo" }));
+
+    setTitle("");
+    setDescription("");
+    setDueDate(new Date());
+    setSelectedPriority(prioritiesData.options[0]);
+    setSelectedLabels([]);
+    setSelectedAssignees([]);
 
     onClose();
   };
 
-  useEffect(() => {
-    setSelectedAssignees(task.assignees);
-  }, [task.assignees]);
-
-  useEffect(() => {
-    setSelectedLabels(task.labels);
-  }, [task.labels]);
-
   return (
     <Dialog
-      open={isEditOpen}
+      open={isNewTaskOpen}
       onClose={onClose}
       transition
       className="fixed inset-0 flex w-screen items-center justify-center bg-black/30 p-4 transition duration-300 ease-out data-closed:opacity-0"
@@ -101,10 +116,8 @@ function UpdateTaskDialog({ task, isEditOpen, onClose }) {
         <DialogPanel className="w-full md:w-xl rounded-lg bg-white pb-5 h-full max-h-max overflow-auto">
           <div className="flex justify-between sticky top-0 z-1 bg-white p-5">
             <div>
-              <h3 className="font-bold capitalize">Edit Card</h3>
-              <p className="text-xs text-gray-500">
-                Make changes to the card details and save your changes
-              </p>
+              <h3 className="font-bold capitalize">Add New Task</h3>
+              <p className="text-xs text-gray-500">Create a new task</p>
             </div>
             <button
               className="w-5 h-5 flex items-center justify-center shrink-0 bg-gray-100 rounded-md cursor-pointer"
@@ -113,7 +126,7 @@ function UpdateTaskDialog({ task, isEditOpen, onClose }) {
               <X size={14} />
             </button>
           </div>
-          <form className="space-y-3 px-5">
+          <form onSubmit={handleAddTask} className="space-y-3 px-5">
             <div>
               <label
                 htmlFor="title"
@@ -159,7 +172,7 @@ function UpdateTaskDialog({ task, isEditOpen, onClose }) {
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Enter task description"
                 rows={4}
-                className="w-full border border-slate-300 rounded-md p-2 text-sm focus:outline-none focus:border-slate-400"
+                className="w-full border border-slate-300 rounded-md p-2 text-sm focus:outline-none focus:border-slate-400 resize-none"
               />
             </div>
             <div className="grid md:grid-cols-2 gap-2">
@@ -173,7 +186,11 @@ function UpdateTaskDialog({ task, isEditOpen, onClose }) {
                 </label>
                 <CustomSelect
                   value={selectedPriority}
-                  onChange={setSelectedPriority}
+                  onChange={(value) => {
+                    if (value && !Array.isArray(value)) {
+                      setSelectedPriority(value as PriorityOption);
+                    }
+                  }}
                   options={prioritiesData.options}
                   placeholder="Priority"
                   optionType="priority"
@@ -191,7 +208,9 @@ function UpdateTaskDialog({ task, isEditOpen, onClose }) {
                   showIcon
                   selected={dueDate}
                   minDate={new Date()}
-                  onChange={(date) => setDueDate(date)}
+                  onChange={(date) => {
+                    if (date) setDueDate(date);
+                  }}
                   icon={<Calendar size={14} />}
                   className="w-full border border-slate-300 rounded-md !p-2 !ps-7 text-sm focus:outline-none focus:border-slate-400"
                 />
@@ -201,6 +220,7 @@ function UpdateTaskDialog({ task, isEditOpen, onClose }) {
               <span className="block text-xs font-medium text-gray-700 mb-1">
                 Assignees
               </span>
+
               {assigneesData.list.length === 0 ? (
                 <p className="text-xs text-gray-500 italic">
                   No team members available. Please add users in{" "}
@@ -210,7 +230,7 @@ function UpdateTaskDialog({ task, isEditOpen, onClose }) {
                 <div className="flex flex-col gap-1">
                   {assigneesData.list.map((assignee) => {
                     const isActive = selectedAssignees.some(
-                      (el) => el.id === assignee.id
+                      (el) => el.id === assignee.id,
                     );
 
                     return (
@@ -223,7 +243,7 @@ function UpdateTaskDialog({ task, isEditOpen, onClose }) {
                         }`}
                       >
                         <span className="avatar w-7 h-7 flex items-center justify-center rounded-[50%] overflow-hidden">
-                          <img src={assignee.avatar} alt={assignee.name}></img>
+                          <img src={assignee.avatar} alt={assignee.name} />
                         </span>
                         <div className="flex flex-col items-start">
                           <span className="text-xs">{assignee.name}</span>
@@ -237,6 +257,7 @@ function UpdateTaskDialog({ task, isEditOpen, onClose }) {
                 </div>
               )}
             </div>
+
             <div>
               <span className="block text-xs font-medium text-gray-700 mb-1">
                 Lables
@@ -282,9 +303,7 @@ function UpdateTaskDialog({ task, isEditOpen, onClose }) {
               >
                 Cancel
               </Button>
-              <Button type="submit" onClick={handleUpdateTask}>
-                Save changes
-              </Button>
+              <Button type="submit">Add Card</Button>
             </div>
           </form>
         </DialogPanel>
@@ -293,4 +312,4 @@ function UpdateTaskDialog({ task, isEditOpen, onClose }) {
   );
 }
 
-export default UpdateTaskDialog;
+export default AddTaskDialog;

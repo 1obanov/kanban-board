@@ -1,11 +1,25 @@
-import { Dialog, DialogPanel, DialogBackdrop } from "@headlessui/react";
-import { TabGroup, TabList, Tab, TabPanels, TabPanel } from "@headlessui/react";
+import {
+  Dialog,
+  DialogBackdrop,
+  DialogPanel,
+  Tab,
+  TabGroup,
+  TabList,
+  TabPanel,
+  TabPanels,
+} from "@headlessui/react";
 import { X } from "lucide-react";
+
 import AssigneesTab from "./AssigneesTab";
 import LabelsTab from "./LabelsTab";
 
+type SettingsDialogProps = {
+  isSettingOpen: boolean;
+  onClose: () => void;
+};
+
 /** Helper to join conditional class names */
-function classNames(...classes) {
+function classNames(...classes: string[]): string {
   return classes.filter(Boolean).join(" ");
 }
 
@@ -14,7 +28,7 @@ function classNames(...classes) {
  * - Manages board settings in tabs (Users / Labels)
  * - Uses Headless UI Dialog & Tabs
  */
-function SettingsDialog({ isSettingOpen, onClose }) {
+function SettingsDialog({ isSettingOpen, onClose }: SettingsDialogProps) {
   return (
     <Dialog
       open={isSettingOpen}
@@ -49,7 +63,7 @@ function SettingsDialog({ isSettingOpen, onClose }) {
                       "px-3 py-1.5 text-sm font-medium",
                       selected
                         ? "bg-white rounded-xl"
-                        : " hover:text-gray-700 cursor-pointer"
+                        : " hover:text-gray-700 cursor-pointer",
                     )
                   }
                 >
@@ -61,7 +75,7 @@ function SettingsDialog({ isSettingOpen, onClose }) {
                       "px-3 py-1.5 text-sm font-medium",
                       selected
                         ? "bg-white rounded-xl"
-                        : " hover:text-gray-700 cursor-pointer"
+                        : " hover:text-gray-700 cursor-pointer",
                     )
                   }
                 >

@@ -1,7 +1,9 @@
 import { createSelector } from "@reduxjs/toolkit";
 
-export const selectTasks = (state) => state.tasks.tasks;
-export const selectFilters = (state) => state.filters;
+import type { RootState } from "../../store";
+
+export const selectTasks = (state: RootState) => state.tasks.tasks;
+export const selectFilters = (state: RootState) => state.filters;
 
 /**
  * Memoized selector that returns a list of tasks filtered by:
@@ -19,8 +21,8 @@ export const selectFilteredTasks = createSelector(
         filters.assignees.length > 0 &&
         !task.assignees.some((assignee) =>
           filters.assignees.some(
-            (filteredAssignee) => filteredAssignee.value === assignee.id
-          )
+            (filteredAssignee) => filteredAssignee.value === assignee.id,
+          ),
         )
       ) {
         return false;
@@ -30,7 +32,7 @@ export const selectFilteredTasks = createSelector(
       if (
         filters.labels.length > 0 &&
         !task.labels.some((label) =>
-          filters.labels.some((filteredLabel) => filteredLabel.value === label)
+          filters.labels.some((filteredLabel) => filteredLabel.value === label),
         )
       ) {
         return false;
@@ -39,7 +41,7 @@ export const selectFilteredTasks = createSelector(
       // Filter by priority
       if (
         filters.priorities.length > 0 &&
-        !filters.priorities.some((f) => f.value === task.priority)
+        !filters.priorities.includes(task.priority)
       ) {
         return false;
       }
@@ -54,5 +56,5 @@ export const selectFilteredTasks = createSelector(
       }
       return true;
     });
-  }
+  },
 );

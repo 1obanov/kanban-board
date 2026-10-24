@@ -1,24 +1,29 @@
-import { useDispatch, useSelector } from "react-redux";
-import CustomSelect from "../../../components/CustomSelect";
 import {
-  Users,
-  Tag,
   Flag,
-  Search,
-  SquareKanban,
   List,
+  Search,
   SlidersHorizontal,
+  SquareKanban,
+  Tag,
+  Users,
 } from "lucide-react";
+import { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+
+import Button from "../../../components/Button";
+import CustomSelect from "../../../components/CustomSelect";
+import type { AssigneeOption } from "../../../data/assignees";
+import type { LabelOption } from "../../../data/labels";
+import type { PriorityID } from "../../../data/priorities";
+import type { AppDispatch, RootState } from "../../../store";
+import { setViewMode } from "../../board/boardSlice";
 import {
-  setSearch,
   setAssignees,
   setLabels,
   setPriorities,
+  setSearch,
 } from "../filtersSlice";
-import { setViewMode } from "../../board/boardSlice";
-import Button from "../../../components/Button";
 import FiltersDialog from "./FiltersDialog";
-import { useState } from "react";
 
 /**
  * FiltersPanel component
@@ -26,19 +31,16 @@ import { useState } from "react";
  * Works with Redux state to control board filters and view mode.
  */
 function FiltersPanel() {
-  const assigneesData = useSelector((state) => state.board.assigneesData);
-  const labelsData = useSelector((state) => state.board.labelsData);
-  const prioritiesData = useSelector((state) => state.board.prioritiesData);
-  const viewMode = useSelector((state) => state.board.viewMode);
-
-  const search = useSelector((state) => state.filters.search);
-  const assignees = useSelector((state) => state.filters.assignees);
-  const labels = useSelector((state) => state.filters.labels);
-  const priorities = useSelector((state) => state.filters.priorities);
+  const { assigneesData, labelsData, prioritiesData, viewMode } = useSelector(
+    (state: RootState) => state.board,
+  );
+  const { search, assignees, labels, priorities } = useSelector(
+    (state: RootState) => state.filters,
+  );
 
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
 
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
 
   return (
     <div className="flex md:items-center flex-col md:flex-row gap-2 w-full">
@@ -48,7 +50,7 @@ function FiltersPanel() {
           id="search"
           name="search"
           type="text"
-          placeholder="Search cards"
+          placeholder="Search tasks"
           className="text-sm focus-visible:outline-0 border-0 placeholder:text-gray-500"
           value={search}
           onChange={(e) => dispatch(setSearch(e.target.value))}
@@ -100,7 +102,9 @@ function FiltersPanel() {
         <div className="md:w-56">
           <CustomSelect
             value={assignees}
-            onChange={(value) => dispatch(setAssignees(value))}
+            onChange={(value) => {
+              dispatch(setAssignees(value as AssigneeOption[]));
+            }}
             options={assigneesData.options}
             placeholder="Assignees"
             optionType="assignees"
@@ -110,7 +114,9 @@ function FiltersPanel() {
         <div className="md:w-48">
           <CustomSelect
             value={labels}
-            onChange={(value) => dispatch(setLabels(value))}
+            onChange={(value) => {
+              dispatch(setLabels(value as LabelOption[]));
+            }}
             options={labelsData.options}
             placeholder="Labels"
             optionType="labels"
@@ -119,8 +125,18 @@ function FiltersPanel() {
         </div>
         <div className="md:w-52">
           <CustomSelect
-            value={priorities}
-            onChange={(value) => dispatch(setPriorities(value))}
+            value={prioritiesData.options.filter((option) =>
+              priorities.includes(option.value),
+            )}
+            onChange={(value) => {
+              dispatch(
+                setPriorities(
+                  Array.isArray(value)
+                    ? value.map((option) => option.value as PriorityID)
+                    : [],
+                ),
+              );
+            }}
             options={prioritiesData.options}
             placeholder="Priority"
             optionType="priority"

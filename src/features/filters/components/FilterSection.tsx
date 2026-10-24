@@ -1,11 +1,32 @@
-import { Check } from "lucide-react";
+import { Check, type LucideIcon } from "lucide-react";
+
+import type { PriorityID } from "../../../data/priorities";
+
+type FilterTitle = "Assignees" | "Labels" | "Priority";
+
+type FilterOption = {
+  value: string;
+  label: string;
+  color?: string;
+};
+
+type FilterSectionProps<Option extends FilterOption, Item> = {
+  title: FilterTitle;
+  icon: LucideIcon;
+  list: Item[];
+  options: Option[];
+  selected: Option[] | PriorityID[];
+  onToggle: (option: Option) => void;
+  onClear: () => void;
+  emptyMessage: React.ReactNode;
+};
 
 /**
  * FilterSection component
  * Renders a list of filter options with selectable checkboxes and a "Clear All" button.
  * Used in the FiltersDialog for Assignees, Labels, and Priorities.
  */
-function FilterSection({
+function FilterSection<Option extends FilterOption, Item>({
   title,
   icon: Icon,
   list = [],
@@ -14,7 +35,9 @@ function FilterSection({
   onToggle,
   onClear,
   emptyMessage,
-}) {
+}: FilterSectionProps<Option, Item>) {
+  const isPriority = title === "Priority";
+
   return (
     <div>
       <span className="flex items-center justify-between pb-1 mb-1 border-b border-slate-200">
@@ -38,7 +61,13 @@ function FilterSection({
         ) : (
           <div className="flex flex-col">
             {options.map((option) => {
-              const isActive = selected.some((el) => el.value === option.value);
+              const isActive = isPriority
+                ? (selected as PriorityID[]).includes(
+                    option.value as PriorityID,
+                  )
+                : (selected as Option[]).some(
+                    (item) => item.value === option.value,
+                  );
 
               return (
                 <button
@@ -56,6 +85,7 @@ function FilterSection({
                   >
                     {isActive && <Check size={14} />}
                   </span>
+
                   <span className="text-xs">{option.label}</span>
                 </button>
               );

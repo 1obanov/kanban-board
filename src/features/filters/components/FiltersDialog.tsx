@@ -1,52 +1,87 @@
-import Button from "../../../components/Button";
-import { X, Users, Tag, Flag } from "lucide-react";
-import { Dialog, DialogPanel, DialogBackdrop } from "@headlessui/react";
+import { Dialog, DialogBackdrop,DialogPanel } from "@headlessui/react";
+import { Flag,Tag, Users, X } from "lucide-react";
+import {
+  type Dispatch,
+  type FormEvent,
+  type SetStateAction,
+  useEffect,
+  useState,
+} from "react";
 import { useDispatch, useSelector } from "react-redux";
+
+import Button from "../../../components/Button";
+import type { AssigneeOption } from "../../../data/assignees";
+import type { LabelOption } from "../../../data/labels";
+import type { PriorityID, PriorityOption } from "../../../data/priorities";
+import type { AppDispatch, RootState } from "../../../store";
 import { setAssignees, setLabels, setPriorities } from "../filtersSlice";
-import { useEffect, useState } from "react";
 import FilterSection from "./FilterSection";
 
+type FiltersDialogProps = {
+  isFiltersOpen: boolean;
+  onClose: () => void;
+};
+
 /** Dialog component to manage task filters */
-function FiltersDialog({ isFiltersOpen, onClose }) {
-  const dispatch = useDispatch();
+function FiltersDialog({ isFiltersOpen, onClose }: FiltersDialogProps) {
+  const dispatch = useDispatch<AppDispatch>();
 
   /** Get board data for filter options */
   const { assigneesData, labelsData, prioritiesData } = useSelector(
-    (state) => state.board
+    (state: RootState) => state.board,
   );
 
   /** Get currently selected filters */
   const { assignees, labels, priorities } = useSelector(
-    (state) => state.filters
+    (state: RootState) => state.filters,
   );
 
   /** Local state for selected filters */
-  const [selectedAssignees, setSelectedAssignees] = useState(assignees);
-  const [selectedLabels, setSelectedLabels] = useState(labels);
-  const [selectedPriorities, setSelectedPriorities] = useState(priorities);
+  const [selectedAssignees, setSelectedAssignees] =
+    useState<AssigneeOption[]>(assignees);
+  const [selectedLabels, setSelectedLabels] = useState<LabelOption[]>(labels);
+  const [selectedPriorities, setSelectedPriorities] =
+    useState<PriorityID[]>(priorities);
 
-  /** Toggle a filter option */
-  const toggleOption = (updateState) => (option) => {
-    updateState((prev) => {
-      const exists = prev.some((item) => item.value === option.value);
-      return exists
-        ? prev.filter((item) => item.value !== option.value)
-        : [...prev, option];
-    });
+  /** Toggle an option in a selected options array */
+  const toggleOption =
+    <T extends { value: string }>(updateState: Dispatch<SetStateAction<T[]>>) =>
+    (option: T) => {
+      updateState((prev) => {
+        const exists = prev.some((item) => item.value === option.value);
+
+        return exists
+          ? prev.filter((item) => item.value !== option.value)
+          : [...prev, option];
+      });
+    };
+
+  /** Toggle a priority ID */
+  const togglePriority = (option: PriorityOption) => {
+    setSelectedPriorities((prev) =>
+      prev.includes(option.value)
+        ? prev.filter((id) => id !== option.value)
+        : [...prev, option.value],
+    );
   };
 
   /** Clear all selected options */
-  const clearOptions = (updateState) => () => updateState([]);
+  const clearOptions =
+    <T,>(updateState: Dispatch<SetStateAction<T[]>>) =>
+    () =>
+      updateState([]);
 
   /** Update local state when global filters change */
   useEffect(() => {
-    setSelectedAssignees(assignees);
-    setSelectedLabels(labels);
-    setSelectedPriorities(priorities);
-  }, [assignees, labels, priorities]);
+    if (isFiltersOpen) {
+      setSelectedAssignees(assignees);
+      setSelectedLabels(labels);
+      setSelectedPriorities(priorities);
+    }
+  }, [isFiltersOpen, assignees, labels, priorities]);
 
   /** Save changes and update global state */
-  const handleSaveChanges = (e) => {
+  const handleSaveChanges = (e: FormEvent<HTMLFormElement>): void => {
     e.preventDefault();
     dispatch(setAssignees(selectedAssignees));
     dispatch(setLabels(selectedLabels));
@@ -78,7 +113,7 @@ function FiltersDialog({ isFiltersOpen, onClose }) {
               <X size={14} />
             </button>
           </div>
-          <form className="space-y-3 px-5">
+          <form onSubmit={handleSaveChanges} className="space-y-3 px-5">
             <FilterSection
               title="Assignees"
               icon={Users}
@@ -115,7 +150,7 @@ function FiltersDialog({ isFiltersOpen, onClose }) {
               list={prioritiesData.list}
               options={prioritiesData.options}
               selected={selectedPriorities}
-              onToggle={toggleOption(setSelectedPriorities)}
+              onToggle={togglePriority}
               onClear={clearOptions(setSelectedPriorities)}
               emptyMessage="No priorities available."
             />
@@ -130,9 +165,7 @@ function FiltersDialog({ isFiltersOpen, onClose }) {
               >
                 Cancel
               </Button>
-              <Button type="submit" onClick={handleSaveChanges}>
-                Save changes
-              </Button>
+              <Button type="submit">Save changes</Button>
             </div>
           </form>
         </DialogPanel>

@@ -1,9 +1,12 @@
-import { useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { addAssignee } from "../boardSlice";
-import { removeAssignee } from "../boardActions";
 import { Trash2, Users } from "lucide-react";
+import { type FormEvent,useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+
 import Button from "../../../components/Button";
+import type { Assignee } from "../../../data/assignees";
+import type { AppDispatch, RootState } from "../../../store";
+import { addAssignee } from "../boardSlice";
+import { removeAssignee } from "../boardThunks";
 
 /**
  * Tab for managing assignees in board settings
@@ -12,9 +15,11 @@ import Button from "../../../components/Button";
  * - Validates name and email fields
  */
 function AssigneesTab() {
-  const assigneesData = useSelector((state) => state.board.assigneesData);
+  const assigneesData = useSelector(
+    (state: RootState) => state.board.assigneesData,
+  );
 
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
 
   const [name, setName] = useState("");
   const [nameError, setNameError] = useState("");
@@ -22,13 +27,13 @@ function AssigneesTab() {
   const [email, setEmail] = useState("");
   const [emailError, setEmailError] = useState("");
 
-  const isValidEmail = (value) => {
+  const isValidEmail = (value: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(value);
   };
 
   /** Handle adding new user */
-  const handleAddUser = (e) => {
+  const handleAddUser = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     // Validate name
@@ -43,27 +48,28 @@ function AssigneesTab() {
     if (!email.trim()) {
       setEmailError("Email is required");
       return;
-    } else if (!isValidEmail(email)) {
+    } else if (!isValidEmail(email.trim())) {
       setEmailError("Invalid email format");
       return;
     }
 
     setEmailError("");
 
-    // Check if email already exists
+    // Normalize email and check if it already exists
+    const normalizedEmail = email.trim().toLowerCase();
+
     const emailExists = assigneesData.list.some(
-      (user) => user.email.toLowerCase() === email.toLowerCase()
+      (user) => user.email.trim().toLowerCase() === normalizedEmail,
     );
+
     if (emailExists) {
       setEmailError("Email already exists");
       return;
     }
 
-    const firstWord = name.trim().split(" ")[0].toLowerCase();
-
     // Create new user object
-    const newUser = {
-      id: firstWord,
+    const newUser: Assignee = {
+      id: crypto.randomUUID(),
       name,
       email,
       avatar: `https://i.pravatar.cc/150?img=${
@@ -76,17 +82,19 @@ function AssigneesTab() {
     // Clear form
     setName("");
     setEmail("");
+    setNameError("");
+    setEmailError("");
   };
 
   /** Handle deleting a user */
-  const handleDeleteUser = (userId) => {
+  const handleDeleteUser = (userId: Assignee["id"]) => {
     dispatch(removeAssignee(userId));
   };
 
   return (
     <div>
       <h3 className="font-medium capitalize mb-2">Team members</h3>
-      <form className="space-y-3 mb-3">
+      <form onSubmit={handleAddUser} className="space-y-3 mb-3">
         <div className="grid md:grid-cols-2 gap-2">
           <div>
             <label
@@ -138,7 +146,7 @@ function AssigneesTab() {
                   setEmailError("");
                 }
               }}
-              placeholder="Enter name"
+              placeholder="Enter email"
               required
               className={`w-full border rounded-md p-2 text-sm focus:outline-none ${
                 emailError
@@ -153,15 +161,9 @@ function AssigneesTab() {
         </div>
         <div>
           <Button
-            type="button"
-            className={`text-sm flex items-center gap-2 px-2 py-2 
-    ${
-      !name.trim() || !email.trim()
-        ? "opacity-50 hover:bg-slate-900 !cursor-default "
-        : ""
-    }`}
+            type="submit"
+            className={`text-sm flex items-center gap-2 px-2 py-2 disabled:opacity-50 disabled:cursor-not-allowed`}
             padding={"px-2 py-2"}
-            onClick={handleAddUser}
             disabled={!name.trim() || !email.trim()}
           >
             <Users size={14} />

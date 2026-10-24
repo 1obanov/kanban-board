@@ -1,22 +1,37 @@
 import {
-  Home,
-  Columns,
-  Calendar,
   Book,
-  Users,
+  Calendar,
   ChevronsUp,
+  Columns,
+  Home,
+  type LucideIcon,
   Settings,
+  Users,
 } from "lucide-react";
+
+type SidebarItemId =
+  | "dashboard"
+  | "kanban"
+  | "calendar"
+  | "documentation"
+  | "users"
+  | "settings";
+
+type SidebarNavItem = {
+  id: SidebarItemId;
+  label: string;
+  icon: LucideIcon;
+};
 
 /**
  * Sidebar navigation component
  */
 function SideBar() {
-  const navItems = [
+  const navItems: SidebarNavItem[] = [
     { id: "dashboard", label: "Dashboard", icon: Home },
     { id: "kanban", label: "Kanban Board", icon: Columns },
     { id: "calendar", label: "Calendar", icon: Calendar },
-    { id: "docs", label: "Documentation", icon: Book },
+    { id: "documentation", label: "Documentation", icon: Book },
     { id: "users", label: "Users", icon: Users },
     { id: "settings", label: "Settings", icon: Settings },
   ];
