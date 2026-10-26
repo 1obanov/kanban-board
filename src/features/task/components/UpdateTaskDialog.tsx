@@ -2,7 +2,7 @@ import "react-datepicker/dist/react-datepicker.css";
 
 import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
 import { Calendar, X } from "lucide-react";
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 import DatePicker from "react-datepicker";
 import { useDispatch, useSelector } from "react-redux";
 
@@ -104,6 +104,26 @@ export default function UpdateTaskDialog({
 
     onClose();
   };
+
+  useEffect(() => {
+    if (isEditOpen) {
+      setTitle(task.title);
+      setTitleError("");
+      setDescription(task.description);
+      setSelectedPriority(priority);
+      setSelectedLabels(task.labelIds);
+      setSelectedAssignees(task.assigneeIds);
+      setDueDate(task.dueDate ? new Date(task.dueDate) : new Date());
+    }
+  }, [
+    isEditOpen,
+    task.title,
+    task.description,
+    priority,
+    task.labelIds,
+    task.assigneeIds,
+    task.dueDate,
+  ]);
 
   return (
     <Dialog

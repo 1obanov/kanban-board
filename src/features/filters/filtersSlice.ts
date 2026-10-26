@@ -4,7 +4,7 @@ import type { LabelOption } from "../../types/label";
 import type { PriorityID } from "../../types/priority";
 import type { UserOption } from "../../types/user";
 
-export type FiltersState = {
+type FiltersState = {
   search: string;
   assignees: UserOption[];
   labels: LabelOption[];

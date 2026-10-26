@@ -3,12 +3,12 @@ import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import type { Task } from "../../types/board";
 import { fetchBoardData } from "../board/boardThunks";
 
-export type TaskState = {
+type TaskState = {
   tasks: Task[];
 };
 
 type UpdateTaskPayload = {
-  id: string;
+  id: Task["id"];
   updatedFields: Partial<Omit<Task, "id">>;
 };
 
@@ -28,8 +28,9 @@ const taskSlice = createSlice({
     },
 
     /** Delete a task by id */
-    deleteTask(state, action: PayloadAction<string>) {
+    deleteTask(state, action: PayloadAction<Task["id"]>) {
       const taskId = action.payload;
+
       state.tasks = state.tasks.filter((task) => task.id !== taskId);
     },
 

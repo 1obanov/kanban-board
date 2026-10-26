@@ -1,12 +1,12 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
-import type { BoardColumn, ViewMode } from "../../types/board";
+import type { BoardColumn, Task, ViewMode } from "../../types/board";
 import type { Label } from "../../types/label";
 import type { Priority } from "../../types/priority";
 import type { User } from "../../types/user";
 import { fetchBoardData } from "./boardThunks";
 
-export type BoardState = {
+type BoardState = {
   users: User[];
   availableLabels: Label[];
   availablePriorities: Priority[];
@@ -14,16 +14,16 @@ export type BoardState = {
   viewMode: ViewMode;
 };
 
-export type MoveTaskInColumnPayload = {
-  taskId: string;
-  sourceColumnId: string;
-  destinationColumnId: string;
+type MoveTaskInColumnPayload = {
+  taskId: Task["id"];
+  sourceColumnId: BoardColumn["id"];
+  destinationColumnId: BoardColumn["id"];
   destinationIndex: number;
 };
 
 type AddTaskToColumnPayload = {
-  taskId: string;
-  columnId: string;
+  taskId: Task["id"];
+  columnId: BoardColumn["id"];
 };
 
 /**
@@ -46,17 +46,33 @@ const boardSlice = createSlice({
       state.viewMode = action.payload;
     },
 
+    /** Change name of column */
+    changeColumnName(
+      state,
+      action: PayloadAction<Pick<BoardColumn, "id" | "title">>,
+    ) {
+      const { id, title } = action.payload;
+
+      const column = state.columns.find((col) => col.id === id);
+
+      if (column) {
+        column.title = title;
+      }
+    },
+
     /** Add task ID to a column */
     addTaskToColumn(state, action: PayloadAction<AddTaskToColumnPayload>) {
       const { taskId, columnId } = action.payload;
+
       const column = state.columns.find((col) => col.id === columnId);
+
       if (column) {
         column.taskIds.push(taskId);
       }
     },
 
     /** Remove task ID from its column */
-    deleteTaskFromColumn(state, action: PayloadAction<string>) {
+    deleteTaskFromColumn(state, action: PayloadAction<Task["id"]>) {
       const taskId = action.payload;
       const column = state.columns.find((col) => col.taskIds.includes(taskId));
 
@@ -87,7 +103,7 @@ const boardSlice = createSlice({
     },
 
     /** Delete an user from the board */
-    deleteUser(state, action: PayloadAction<string>) {
+    deleteUser(state, action: PayloadAction<User["id"]>) {
       const userId = action.payload;
 
       state.users = state.users.filter((users) => users.id !== userId);
@@ -99,7 +115,7 @@ const boardSlice = createSlice({
     },
 
     /** Delete a label from the board */
-    deleteLabel(state, action: PayloadAction<string>) {
+    deleteLabel(state, action: PayloadAction<Label["id"]>) {
       const labelId = action.payload;
 
       state.availableLabels = state.availableLabels.filter(
@@ -119,6 +135,7 @@ const boardSlice = createSlice({
 
 export const {
   setViewMode,
+  changeColumnName,
   addTaskToColumn,
   deleteTaskFromColumn,
   moveTaskInColumn,
