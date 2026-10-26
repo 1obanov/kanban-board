@@ -1,5 +1,4 @@
-import type { Assignee } from "../data/assignees";
-import type { PriorityID } from "../data/priorities";
+import type { PriorityID } from "./priority";
 
 export type ViewMode = "board" | "list";
 
@@ -13,13 +12,13 @@ export type Task = {
   id: string;
   title: string;
   description: string;
-  assignees: Assignee[];
-  labels: string[];
-  priority: PriorityID;
+  assigneeIds: string[];
+  labelIds: string[];
+  priorityId: PriorityID;
   dueDate: string;
 };
 
-export type BoardData = {
+export type Board = {
   columns: BoardColumn[];
   tasks: Task[];
 };

@@ -1,16 +1,7 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
-import boardDataJson from "../../data/boardData.json";
-import type { PriorityID } from "../../data/priorities";
-import type { BoardData, Task } from "../../types/board";
-
-const boardData: BoardData = {
-  columns: boardDataJson.columns,
-  tasks: boardDataJson.tasks.map((task) => ({
-    ...task,
-    priority: task.priority as PriorityID,
-  })),
-};
+import type { Task } from "../../types/board";
+import { fetchBoardData } from "../board/boardThunks";
 
 export type TaskState = {
   tasks: Task[];
@@ -23,7 +14,7 @@ type UpdateTaskPayload = {
 
 /** Initial state for tasks */
 const initialState: TaskState = {
-  tasks: boardData.tasks,
+  tasks: [],
 };
 
 /** Slice to manage tasks: add, delete, update, and move */
@@ -46,12 +37,20 @@ const taskSlice = createSlice({
     updateTask(state, action: PayloadAction<UpdateTaskPayload>) {
       const { id, updatedFields } = action.payload;
 
-      state.tasks = state.tasks.map((task) =>
-        task.id === id ? { ...task, ...updatedFields } : task,
-      );
+      const task = state.tasks.find((task) => task.id === id);
+
+      if (task) {
+        Object.assign(task, updatedFields);
+      }
     },
+  },
+  extraReducers: (builder) => {
+    builder.addCase(fetchBoardData.fulfilled, (state, action) => {
+      state.tasks = action.payload.tasks;
+    });
   },
 });
 
 export const { addTask, deleteTask, updateTask } = taskSlice.actions;
+
 export default taskSlice.reducer;

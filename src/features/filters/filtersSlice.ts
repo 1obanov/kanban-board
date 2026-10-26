@@ -1,12 +1,12 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
-import type { AssigneeOption } from "../../data/assignees";
-import type { LabelOption } from "../../data/labels";
-import type { PriorityID } from "../../data/priorities";
+import type { LabelOption } from "../../types/label";
+import type { PriorityID } from "../../types/priority";
+import type { UserOption } from "../../types/user";
 
 export type FiltersState = {
   search: string;
-  assignees: AssigneeOption[];
+  assignees: UserOption[];
   labels: LabelOption[];
   priorities: PriorityID[];
 };
@@ -30,7 +30,7 @@ const filtersSlice = createSlice({
     },
 
     /** Set selected assignees */
-    setAssignees: (state, action: PayloadAction<AssigneeOption[]>) => {
+    setAssignees: (state, action: PayloadAction<UserOption[]>) => {
       state.assignees = action.payload;
     },
 
@@ -48,4 +48,5 @@ const filtersSlice = createSlice({
 
 export const { setSearch, setAssignees, setLabels, setPriorities } =
   filtersSlice.actions;
+
 export default filtersSlice.reducer;

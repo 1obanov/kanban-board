@@ -1,27 +1,55 @@
 import { Settings } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 
 import Button from "./components/Button";
+import ErrorMessage from "./components/ErrorMessage";
+import Loader from "./components/Loader";
 import SideBar from "./components/SideBar";
+import { fetchBoardData } from "./features/board/boardThunks";
 import Board from "./features/board/components/Board";
 import SettingsDialog from "./features/board/SettingsDialog/SettingsDialog";
 import FiltersPanel from "./features/filters/components/FiltersPanel";
 import AddTaskDialog from "./features/task/components/AddTaskDialog";
+import type { AppDispatch, RootState } from "./store";
 
-function App() {
+export default function App() {
+  const dispatch = useDispatch<AppDispatch>();
+
+  const { status, error } = useSelector((state: RootState) => state.boardData);
+
   const [isNewTaskOpen, setIsNewTaskOpen] = useState(false);
   const [isSettingOpen, setIsSettingOpen] = useState(false);
 
+  useEffect(() => {
+    dispatch(fetchBoardData());
+  }, [dispatch]);
+
+  if (status === "loading" || status === "idle") {
+    return <Loader />;
+  }
+
+  if (status === "failed") {
+    return (
+      <ErrorMessage
+        message={error ?? "Something went wrong."}
+        onRetry={() => {
+          dispatch(fetchBoardData());
+        }}
+      />
+    );
+  }
+
   return (
-    <div className="app-container grid grid-cols-[200px_1fr] max-lg:grid-cols-[32px_1fr] p-2 gap-2 h-screen">
+    <div className="app-container grid h-screen grid-cols-[200px_1fr] gap-2 p-2 max-lg:grid-cols-[32px_1fr]">
       <SideBar />
-      <div className="bg-white border-1 rounded-lg border-slate-300 min-w-0 h-full flex flex-col max-h-[calc(100vh-(--spacing(4)))]">
-        <div className="p-3 border-b-1 border-slate-300">
+      <div className="flex h-full max-h-[calc(100vh-(--spacing(4)))] min-w-0 flex-col rounded-lg border-1 border-slate-300 bg-white">
+        <div className="border-b-1 border-slate-300 p-3">
           <div className="flex items-center justify-between gap-2">
             <h1 className="font-bold">Kanban Board</h1>
             <Button
               type="button"
-              className="text-sm flex items-center gap-2"
+              className="flex items-center gap-2 text-sm"
               border={"border-1 border-gray-300"}
               padding={"px-2 py-1"}
               bgColor={"bg-white"}
@@ -37,9 +65,10 @@ function App() {
               onClose={() => setIsSettingOpen(false)}
             />
           </div>
-          <div className="relative flex flex-col md:flex-row items-center justify-between gap-2 py-3 w-full">
+          <div className="relative flex w-full flex-col items-center justify-between gap-2 py-3 md:flex-row">
             <FiltersPanel />
             <Button
+              type="button"
               className="w-full md:w-auto"
               onClick={() => setIsNewTaskOpen(true)}
             >
@@ -56,5 +85,3 @@ function App() {
     </div>
   );
 }
-
-export default App;

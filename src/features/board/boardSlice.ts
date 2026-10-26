@@ -1,15 +1,15 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
-import { type Assignee,assignees } from "../../data/assignees";
-import boardDataJson from "../../data/boardData.json";
-import { type Label,labels } from "../../data/labels";
-import { priorities } from "../../data/priorities";
 import type { BoardColumn, ViewMode } from "../../types/board";
+import type { Label } from "../../types/label";
+import type { Priority } from "../../types/priority";
+import type { User } from "../../types/user";
+import { fetchBoardData } from "./boardThunks";
 
 export type BoardState = {
-  assigneesData: typeof assignees;
-  labelsData: typeof labels;
-  prioritiesData: typeof priorities;
+  users: User[];
+  availableLabels: Label[];
+  availablePriorities: Priority[];
   columns: BoardColumn[];
   viewMode: ViewMode;
 };
@@ -30,10 +30,10 @@ type AddTaskToColumnPayload = {
  * Initial state for Kanban board slice
  */
 const initialState: BoardState = {
-  assigneesData: assignees,
-  labelsData: labels,
-  prioritiesData: priorities,
-  columns: boardDataJson.columns,
+  users: [],
+  availableLabels: [],
+  availablePriorities: [],
+  columns: [],
   viewMode: "board",
 };
 
@@ -81,56 +81,39 @@ const boardSlice = createSlice({
       destCol.taskIds.splice(destinationIndex, 0, taskId);
     },
 
-    /** Add a new assignee to the board */
-    addAssignee(state, action: PayloadAction<Assignee>) {
-      const user = action.payload;
-
-      state.assigneesData.list.push(user);
-
-      state.assigneesData.options.push({
-        value: user.id,
-        label: user.name,
-      });
+    /** Add a new user to the board */
+    addUser(state, action: PayloadAction<User>) {
+      state.users.push(action.payload);
     },
 
-    /** Delete an assignee from the board */
-    deleteAssignee(state, action: PayloadAction<string>) {
-      const assigneeId = action.payload;
+    /** Delete an user from the board */
+    deleteUser(state, action: PayloadAction<string>) {
+      const userId = action.payload;
 
-      state.assigneesData.list = state.assigneesData.list.filter(
-        (assignee) => assignee.id !== assigneeId,
-      );
-
-      state.assigneesData.options = state.assigneesData.options.filter(
-        (assignee) => assignee.value !== assigneeId,
-      );
+      state.users = state.users.filter((users) => users.id !== userId);
     },
 
     /** Add a new label to the board */
     addLabel(state, action: PayloadAction<Label>) {
-      const label = action.payload;
-
-      state.labelsData.list.push(label);
-
-      state.labelsData.options.push({
-        value: label.id,
-        label: label.name,
-        color: label.color,
-      });
+      state.availableLabels.push(action.payload);
     },
 
     /** Delete a label from the board */
     deleteLabel(state, action: PayloadAction<string>) {
       const labelId = action.payload;
 
-      state.labelsData.list = state.labelsData.list.filter(
+      state.availableLabels = state.availableLabels.filter(
         (label) => label.id !== labelId,
       );
-
-      state.labelsData.options = state.labelsData.options.filter(
-        (label) => label.value !== labelId,
-      );
     },
+  },
+  extraReducers: (builder) => {
+    builder.addCase(fetchBoardData.fulfilled, (state, action) => {
+      state.columns = action.payload.columns;
+      state.users = action.payload.users;
+      state.availableLabels = action.payload.labels;
+      state.availablePriorities = action.payload.priorities;
+    });
   },
 });
 
@@ -139,8 +122,8 @@ export const {
   addTaskToColumn,
   deleteTaskFromColumn,
   moveTaskInColumn,
-  addAssignee,
-  deleteAssignee,
+  addUser,
+  deleteUser,
   addLabel,
   deleteLabel,
 } = boardSlice.actions;

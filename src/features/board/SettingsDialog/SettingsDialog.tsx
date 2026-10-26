@@ -10,8 +10,8 @@ import {
 } from "@headlessui/react";
 import { X } from "lucide-react";
 
-import AssigneesTab from "./AssigneesTab";
 import LabelsTab from "./LabelsTab";
+import UsersTab from "./UsersTab";
 
 type SettingsDialogProps = {
   isSettingOpen: boolean;
@@ -28,7 +28,10 @@ function classNames(...classes: string[]): string {
  * - Manages board settings in tabs (Users / Labels)
  * - Uses Headless UI Dialog & Tabs
  */
-function SettingsDialog({ isSettingOpen, onClose }: SettingsDialogProps) {
+export default function SettingsDialog({
+  isSettingOpen,
+  onClose,
+}: SettingsDialogProps) {
   return (
     <Dialog
       open={isSettingOpen}
@@ -38,8 +41,8 @@ function SettingsDialog({ isSettingOpen, onClose }: SettingsDialogProps) {
     >
       <DialogBackdrop className="fixed inset-0 bg-black/30" />
       <div className="fixed inset-0 flex w-screen items-center justify-center p-4">
-        <DialogPanel className="w-full md:w-xl rounded-lg bg-white pb-5 h-full max-h-max overflow-auto">
-          <div className="flex justify-between sticky top-0 z-1 bg-white p-5">
+        <DialogPanel className="h-full max-h-max w-full overflow-auto rounded-lg bg-white pb-5 md:w-xl">
+          <div className="sticky top-0 z-1 flex justify-between bg-white p-5">
             <div>
               <h3 className="font-bold capitalize">Board Settings</h3>
               <p className="text-xs text-gray-500">
@@ -48,7 +51,8 @@ function SettingsDialog({ isSettingOpen, onClose }: SettingsDialogProps) {
               </p>
             </div>
             <button
-              className="w-5 h-5 flex items-center justify-center shrink-0 bg-gray-100 rounded-md cursor-pointer"
+              type="button"
+              className="flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center rounded-md bg-gray-100"
               onClick={onClose}
             >
               <X size={14} />
@@ -56,14 +60,14 @@ function SettingsDialog({ isSettingOpen, onClose }: SettingsDialogProps) {
           </div>
           <div className="px-5">
             <TabGroup>
-              <TabList className="grid grid-cols-2 bg-gray-100 rounded-[14px] p-1 mb-4">
+              <TabList className="mb-4 grid grid-cols-2 rounded-[14px] bg-gray-100 p-1">
                 <Tab
                   className={({ selected }) =>
                     classNames(
                       "px-3 py-1.5 text-sm font-medium",
                       selected
-                        ? "bg-white rounded-xl"
-                        : " hover:text-gray-700 cursor-pointer",
+                        ? "rounded-xl bg-white"
+                        : "cursor-pointer hover:text-gray-700",
                     )
                   }
                 >
@@ -74,8 +78,8 @@ function SettingsDialog({ isSettingOpen, onClose }: SettingsDialogProps) {
                     classNames(
                       "px-3 py-1.5 text-sm font-medium",
                       selected
-                        ? "bg-white rounded-xl"
-                        : " hover:text-gray-700 cursor-pointer",
+                        ? "rounded-xl bg-white"
+                        : "cursor-pointer hover:text-gray-700",
                     )
                   }
                 >
@@ -84,7 +88,7 @@ function SettingsDialog({ isSettingOpen, onClose }: SettingsDialogProps) {
               </TabList>
               <TabPanels className="">
                 <TabPanel>
-                  <AssigneesTab />
+                  <UsersTab />
                 </TabPanel>
                 <TabPanel>
                   <LabelsTab />
@@ -97,5 +101,3 @@ function SettingsDialog({ isSettingOpen, onClose }: SettingsDialogProps) {
     </Dialog>
   );
 }
-
-export default SettingsDialog;

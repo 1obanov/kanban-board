@@ -50,7 +50,7 @@ export const CustomOption = ({ optionType, ...props }: CustomOptionProps) => {
       <span className="flex items-center justify-between gap-0.5">
         <span className="flex items-center justify-between gap-2">
           <span
-            className=" w-3 h-3 rounded-[50%]"
+            className="h-3 w-3 rounded-[50%]"
             style={{
               backgroundColor: props.data.color,
             }}

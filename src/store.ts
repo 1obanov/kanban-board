@@ -5,6 +5,7 @@ import {
 } from "@reduxjs/toolkit";
 
 import boardReducer from "./features/board/boardSlice";
+import boardDataReducer from "./features/boardData/boardDataSlice";
 import filtersReducer from "./features/filters/filtersSlice";
 import tasksReducer from "./features/task/taskSlice";
 
@@ -21,6 +22,7 @@ export type AppThunk<ReturnType = void> = ThunkAction<
 const store = configureStore({
   reducer: {
     board: boardReducer,
+    boardData: boardDataReducer,
     tasks: tasksReducer,
     filters: filtersReducer,
   },

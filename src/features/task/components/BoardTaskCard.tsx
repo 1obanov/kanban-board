@@ -1,9 +1,9 @@
 import { Calendar, CalendarOff, SquarePen, Trash2 } from "lucide-react";
 import { useSelector } from "react-redux";
 
-import type { Priority } from "../../../data/priorities";
 import type { RootState } from "../../../store";
 import type { Task } from "../../../types/board";
+import type { Priority } from "../../../types/priority";
 import { formatDueDate } from "../../../utils/dateUtils";
 
 type BoardTaskCardProps = {
@@ -14,35 +14,39 @@ type BoardTaskCardProps = {
   onDelete: () => void;
 };
 
-function BoardTaskCard({
+export default function BoardTaskCard({
   task,
   priority,
   isExpired,
   onEdit,
   onDelete,
 }: BoardTaskCardProps) {
-  const labelsData = useSelector((state: RootState) => state.board.labelsData);
+  const { users, availableLabels } = useSelector(
+    (state: RootState) => state.board,
+  );
 
   return (
-    <div className="group relative card bg-white border-1 rounded-lg border-slate-300 p-2 hover:cursor-grab">
+    <div className="group card relative cursor-grab rounded-lg border-1 border-slate-300 bg-white p-2 active:cursor-grabbing">
       <div className="card__priority mb-3">
         <div className="flex items-center justify-between gap-1">
           <div className="flex items-center gap-1">
             <span
-              className="block w-2.5 h-2.5 rounded-[50%]"
+              className="block h-2.5 w-2.5 rounded-[50%]"
               style={{ backgroundColor: priority.color }}
             />
-            <span className="capitalize text-xs">{task.priority}</span>
+            <span className="text-xs capitalize">{task.priorityId}</span>
           </div>
-          <div className="absolute top-0 right-0 md:relative flex items-center gap-1 transition-opacity duration-300 opacity-0 group-hover:opacity-100 pointer-coarse:opacity-100">
+          <div className="absolute top-0 right-0 flex items-center gap-1 opacity-0 transition-opacity duration-300 group-hover:opacity-100 md:relative pointer-coarse:opacity-100">
             <button
-              className="w-5 h-5 flex items-center justify-center hover:bg-gray-100 rounded-md transition-colors duration-300 cursor-pointer"
+              type="button"
+              className="flex h-5 w-5 cursor-pointer items-center justify-center rounded-md transition-colors duration-300 hover:bg-gray-100"
               onClick={onEdit}
             >
               <SquarePen size={14} />
             </button>
             <button
-              className="w-5 h-5 flex items-center justify-center hover:bg-gray-100 rounded-md hover:text-red-500 transition-colors duration-300 cursor-pointer"
+              type="button"
+              className="flex h-5 w-5 cursor-pointer items-center justify-center rounded-md transition-colors duration-300 hover:bg-gray-100 hover:text-red-500"
               onClick={onDelete}
             >
               <Trash2 size={14} />
@@ -50,13 +54,13 @@ function BoardTaskCard({
           </div>
         </div>
       </div>
-      <div className="card__title font-bold text-sm mb-0.5">{task.title}</div>
-      <div className="card__description text-xs text-gray-500 mb-3">
+      <div className="card__title mb-0.5 text-sm font-bold">{task.title}</div>
+      <div className="card__description mb-3 text-xs text-gray-500">
         {task.description}
       </div>
-      <div className="card__labels flex items-center gap-1 flex-wrap mb-3">
-        {task.labels.map((labelId) => {
-          const labelOption = labelsData.list.find(
+      <div className="card__labels mb-3 flex flex-wrap items-center gap-1">
+        {task.labelIds.map((labelId) => {
+          const labelOption = availableLabels.find(
             (label) => label.id === labelId,
           );
           if (!labelOption) return null;
@@ -64,7 +68,7 @@ function BoardTaskCard({
           return (
             <span
               key={labelId}
-              className="block capitalize text-[10px] py-0.5 px-2 rounded-lg max-w-max"
+              className="block max-w-max rounded-lg px-2 py-0.5 text-[10px] capitalize"
               style={{
                 backgroundColor: `${labelOption.color}20`,
                 color: labelOption.color,
@@ -88,14 +92,17 @@ function BoardTaskCard({
           )}
           {formatDueDate(task.dueDate)}
         </span>
-        <div className="assignees flex -space-x-1 items-center ms-auto">
-          {task.assignees.map((assignee) => {
+        <div className="assignees ms-auto flex items-center -space-x-1">
+          {task.assigneeIds.map((assigneeId) => {
+            const user = users.find((user) => user.id === assigneeId);
+            if (!user) return null;
+
             return (
               <span
-                key={assignee.id}
-                className="flex items-center justify-center w-5 h-5 rounded-[50%] border-2 border-white overflow-hidden"
+                key={user.id}
+                className="flex h-5 w-5 items-center justify-center overflow-hidden rounded-[50%] border-2 border-white"
               >
-                <img src={assignee.avatar} alt={assignee.name} />
+                <img src={user.avatar} alt={user.name} />
               </span>
             );
           })}
@@ -104,5 +111,3 @@ function BoardTaskCard({
     </div>
   );
 }
-
-export default BoardTaskCard;

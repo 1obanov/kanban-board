@@ -15,13 +15,15 @@ export const selectFilters = (state: RootState) => state.filters;
 export const selectFilteredTasks = createSelector(
   [selectTasks, selectFilters],
   (tasks, filters) => {
+    const searchQuery = filters.search.toLowerCase();
+
     return tasks.filter((task) => {
       // Filter by assignees
       if (
         filters.assignees.length > 0 &&
-        !task.assignees.some((assignee) =>
+        !task.assigneeIds.some((assigneeId) =>
           filters.assignees.some(
-            (filteredAssignee) => filteredAssignee.value === assignee.id,
+            (filteredAssignee) => filteredAssignee.value === assigneeId,
           ),
         )
       ) {
@@ -31,8 +33,10 @@ export const selectFilteredTasks = createSelector(
       // Filter by labels
       if (
         filters.labels.length > 0 &&
-        !task.labels.some((label) =>
-          filters.labels.some((filteredLabel) => filteredLabel.value === label),
+        !task.labelIds.some((labelId) =>
+          filters.labels.some(
+            (filteredLabel) => filteredLabel.value === labelId,
+          ),
         )
       ) {
         return false;
@@ -41,7 +45,7 @@ export const selectFilteredTasks = createSelector(
       // Filter by priority
       if (
         filters.priorities.length > 0 &&
-        !filters.priorities.includes(task.priority)
+        !filters.priorities.includes(task.priorityId)
       ) {
         return false;
       }
@@ -49,8 +53,8 @@ export const selectFilteredTasks = createSelector(
       // Filter by search query
       if (
         filters.search &&
-        !task.title.toLowerCase().includes(filters.search.toLowerCase()) &&
-        !task.description.toLowerCase().includes(filters.search.toLowerCase())
+        !task.title.toLowerCase().includes(searchQuery) &&
+        !task.description.toLowerCase().includes(searchQuery)
       ) {
         return false;
       }

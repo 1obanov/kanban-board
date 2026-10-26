@@ -14,7 +14,7 @@ type DeleteTaskDialogProps = {
 /**
  * DeleteTaskDialog component
  */
-function DeleteTaskDialog({
+export default function DeleteTaskDialog({
   taskTitle,
   handleDeleteTask,
   isDeleteOpen,
@@ -30,10 +30,11 @@ function DeleteTaskDialog({
       <DialogBackdrop className="fixed inset-0 bg-black/30" />
 
       <div className="fixed inset-0 flex w-screen items-center justify-center p-4">
-        <DialogPanel className="w-full max-w-sm rounded-lg bg-white pb-5 h-full max-h-max overflow-auto">
-          <div className="flex justify-end sticky top-0 z-1 bg-white p-5">
+        <DialogPanel className="h-full max-h-max w-full max-w-sm overflow-auto rounded-lg bg-white pb-5">
+          <div className="sticky top-0 z-1 flex justify-end bg-white p-5">
             <button
-              className="w-5 h-5 flex items-center justify-center shrink-0 bg-gray-100 rounded-md cursor-pointer"
+              type="button"
+              className="flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center rounded-md bg-gray-100"
               onClick={onClose}
             >
               <X size={14} />
@@ -41,10 +42,10 @@ function DeleteTaskDialog({
           </div>
           <div className="space-y-5 px-5">
             <div className="flex flex-col items-center justify-center gap-3 text-center">
-              <span className="w-10 h-10 bg-red-100 text-red-600 flex items-center justify-center rounded-md">
+              <span className="flex h-10 w-10 items-center justify-center rounded-md bg-red-100 text-red-600">
                 <TriangleAlert size={24} strokeWidth={1.5} />
               </span>
-              <h3 className="font-bold text-lg capitalize">Are you sure?</h3>
+              <h3 className="text-lg font-bold capitalize">Are you sure?</h3>
               <p className="text-xs text-gray-500">
                 This action cannot be undone. The task{" "}
                 <span className="font-semibold underline">{taskTitle}</span>{" "}
@@ -79,5 +80,3 @@ function DeleteTaskDialog({
     </Dialog>
   );
 }
-
-export default DeleteTaskDialog;

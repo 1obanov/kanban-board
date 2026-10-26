@@ -1,0 +1,24 @@
+{
+  "data": [
+    {
+      "id": "low",
+      "name": "Low",
+      "color": "#22c55e"
+    },
+    {
+      "id": "medium",
+      "name": "Medium",
+      "color": "#facc15"
+    },
+    {
+      "id": "high",
+      "name": "High",
+      "color": "#f97316"
+    },
+    {
+      "id": "critical",
+      "name": "Critical",
+      "color": "#ef4444"
+    }
+  ]
+}

@@ -1,11 +1,11 @@
 import { Sketch } from "@uiw/react-color";
 import { Tag, X } from "lucide-react";
-import { type FormEvent,useEffect, useRef, useState } from "react";
+import { type FormEvent, useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import Button from "../../../components/Button";
-import type { Label } from "../../../data/labels";
 import type { AppDispatch, RootState } from "../../../store";
+import type { Label } from "../../../types/label";
 import { addLabel } from "../boardSlice";
 import { removeLabel } from "../boardThunks";
 
@@ -15,10 +15,12 @@ import { removeLabel } from "../boardThunks";
  * - Delete existing labels
  * - Supports color picker
  */
-function LabelsTab() {
-  const labelsData = useSelector((state: RootState) => state.board.labelsData);
-
+export default function LabelsTab() {
   const dispatch = useDispatch<AppDispatch>();
+
+  const availableLabels = useSelector(
+    (state: RootState) => state.board.availableLabels,
+  );
 
   const [labelName, setLabelName] = useState("");
   const [labelNameError, setLabelNameError] = useState("");
@@ -42,7 +44,7 @@ function LabelsTab() {
     }
 
     // Check if label already exists
-    const labelExists = labelsData.list.some((label) => label.id === labelId);
+    const labelExists = availableLabels.some((label) => label.id === labelId);
     if (labelExists) {
       setLabelNameError("Label already exists");
       return;
@@ -87,13 +89,13 @@ function LabelsTab() {
 
   return (
     <div>
-      <h3 className="font-medium capitalize mb-2">Labels</h3>
-      <form onSubmit={handleAddLabel} className="space-y-3 mb-3">
-        <div className="grid md:grid-cols-2 gap-2">
+      <h3 className="mb-2 font-medium capitalize">Labels</h3>
+      <form onSubmit={handleAddLabel} className="mb-3 space-y-3">
+        <div className="grid gap-2 md:grid-cols-2">
           <div>
             <label
               htmlFor="label-name"
-              className="block text-xs font-medium text-gray-700 mb-1"
+              className="mb-1 block text-xs font-medium text-gray-700"
             >
               Label name
               <span className="text-black">*</span>
@@ -111,7 +113,7 @@ function LabelsTab() {
               }}
               placeholder="Enter name"
               required
-              className={`w-full border rounded-md p-2 text-sm focus:outline-none ${
+              className={`w-full rounded-md border p-2 text-sm focus:outline-none ${
                 labelNameError
                   ? "border-red-500"
                   : "border-slate-300 focus:border-slate-400"
@@ -124,14 +126,14 @@ function LabelsTab() {
           <div className="relative">
             <label
               htmlFor="color"
-              className="block text-xs font-medium text-gray-700 mb-1"
+              className="mb-1 block text-xs font-medium text-gray-700"
             >
               Color
             </label>
 
-            <div className="w-full h-9.5 rounded-md bg-gray-100 border-1 border-slate-300 p-2">
+            <div className="h-9.5 w-full rounded-md border-1 border-slate-300 bg-gray-100 p-2">
               <span
-                className="block w-full h-full cursor-pointer rounded-sm border-1 border-black"
+                className="block h-full w-full cursor-pointer rounded-sm border-1 border-black"
                 style={{ backgroundColor: color }}
                 onClick={() => setDisplayColorPicker(!displayColorPicker)}
               />
@@ -152,10 +154,11 @@ function LabelsTab() {
         <div>
           <Button
             type="submit"
-            className={`text-sm flex items-center gap-2 px-2 py-2 
-    ${
-      !labelName.trim() ? "opacity-50 hover:bg-slate-900 !cursor-default " : ""
-    }`}
+            className={`flex items-center gap-2 px-2 py-2 text-sm ${
+              !labelName.trim()
+                ? "!cursor-default opacity-50 hover:bg-slate-900"
+                : ""
+            }`}
             padding={"px-2 py-2"}
             disabled={!labelName.trim()}
           >
@@ -165,19 +168,19 @@ function LabelsTab() {
         </div>
       </form>
       <div>
-        <span className="block text-xs font-medium text-gray-700 mb-1">
+        <span className="mb-1 block text-xs font-medium text-gray-700">
           Current Labels
         </span>
-        {labelsData.list.length === 0 ? (
+        {availableLabels.length === 0 ? (
           <p className="text-xs text-gray-500 italic">
             No labels yet. Add a new label to categorize your tasks
           </p>
         ) : (
           <div className="flex flex-wrap gap-1">
-            {labelsData.list.map((label) => (
+            {availableLabels.map((label) => (
               <div
                 key={label.id}
-                className="flex items-center justify-between gap-1 capitalize text-[10px] py-0.5 px-2 rounded-lg max-w-max"
+                className="flex max-w-max items-center justify-between gap-1 rounded-lg px-2 py-0.5 text-[10px] capitalize"
                 style={{
                   backgroundColor: `${label.color}20`,
                   color: label.color,
@@ -189,7 +192,7 @@ function LabelsTab() {
                   type="button"
                   onClick={() => handleDeleteLabel(label.id)}
                   style={{ backgroundColor: label.color }}
-                  className="w-3 h-3 flex items-center justify-center rounded-full text-white hover:bg-gray-200 cursor-pointer transition duration-300"
+                  className="flex h-3 w-3 cursor-pointer items-center justify-center rounded-full text-white transition duration-300 hover:bg-gray-200"
                 >
                   <X size={10} />
                 </button>
@@ -201,5 +204,3 @@ function LabelsTab() {
     </div>
   );
 }
-
-export default LabelsTab;

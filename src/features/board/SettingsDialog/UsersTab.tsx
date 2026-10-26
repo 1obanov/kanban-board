@@ -1,11 +1,11 @@
 import { Trash2, Users } from "lucide-react";
-import { type FormEvent,useState } from "react";
+import { type FormEvent, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import Button from "../../../components/Button";
-import type { Assignee } from "../../../data/assignees";
 import type { AppDispatch, RootState } from "../../../store";
-import { addAssignee } from "../boardSlice";
+import type { User } from "../../../types/user";
+import { addUser } from "../boardSlice";
 import { removeAssignee } from "../boardThunks";
 
 /**
@@ -14,12 +14,10 @@ import { removeAssignee } from "../boardThunks";
  * - Delete existing members
  * - Validates name and email fields
  */
-function AssigneesTab() {
-  const assigneesData = useSelector(
-    (state: RootState) => state.board.assigneesData,
-  );
-
+export default function UsersTab() {
   const dispatch = useDispatch<AppDispatch>();
+
+  const users = useSelector((state: RootState) => state.board.users);
 
   const [name, setName] = useState("");
   const [nameError, setNameError] = useState("");
@@ -58,7 +56,7 @@ function AssigneesTab() {
     // Normalize email and check if it already exists
     const normalizedEmail = email.trim().toLowerCase();
 
-    const emailExists = assigneesData.list.some(
+    const emailExists = users.some(
       (user) => user.email.trim().toLowerCase() === normalizedEmail,
     );
 
@@ -68,7 +66,7 @@ function AssigneesTab() {
     }
 
     // Create new user object
-    const newUser: Assignee = {
+    const newUser: User = {
       id: crypto.randomUUID(),
       name,
       email,
@@ -77,7 +75,7 @@ function AssigneesTab() {
       }`,
     };
 
-    dispatch(addAssignee(newUser));
+    dispatch(addUser(newUser));
 
     // Clear form
     setName("");
@@ -87,19 +85,19 @@ function AssigneesTab() {
   };
 
   /** Handle deleting a user */
-  const handleDeleteUser = (userId: Assignee["id"]) => {
+  const handleDeleteUser = (userId: User["id"]) => {
     dispatch(removeAssignee(userId));
   };
 
   return (
     <div>
-      <h3 className="font-medium capitalize mb-2">Team members</h3>
-      <form onSubmit={handleAddUser} className="space-y-3 mb-3">
-        <div className="grid md:grid-cols-2 gap-2">
+      <h3 className="mb-2 font-medium capitalize">Team members</h3>
+      <form onSubmit={handleAddUser} className="mb-3 space-y-3">
+        <div className="grid gap-2 md:grid-cols-2">
           <div>
             <label
               htmlFor="name"
-              className="block text-xs font-medium text-gray-700 mb-1"
+              className="mb-1 block text-xs font-medium text-gray-700"
             >
               Name
               <span className="text-black">*</span>
@@ -117,7 +115,7 @@ function AssigneesTab() {
               }}
               placeholder="Enter name"
               required
-              className={`w-full border rounded-md p-2 text-sm focus:outline-none ${
+              className={`w-full rounded-md border p-2 text-sm focus:outline-none ${
                 nameError
                   ? "border-red-500"
                   : "border-slate-300 focus:border-slate-400"
@@ -130,7 +128,7 @@ function AssigneesTab() {
           <div>
             <label
               htmlFor="email"
-              className="block text-xs font-medium text-gray-700 mb-1"
+              className="mb-1 block text-xs font-medium text-gray-700"
             >
               Email
               <span className="text-black">*</span>
@@ -148,7 +146,7 @@ function AssigneesTab() {
               }}
               placeholder="Enter email"
               required
-              className={`w-full border rounded-md p-2 text-sm focus:outline-none ${
+              className={`w-full rounded-md border p-2 text-sm focus:outline-none ${
                 emailError
                   ? "border-red-500"
                   : "border-slate-300 focus:border-slate-400"
@@ -162,7 +160,7 @@ function AssigneesTab() {
         <div>
           <Button
             type="submit"
-            className={`text-sm flex items-center gap-2 px-2 py-2 disabled:opacity-50 disabled:cursor-not-allowed`}
+            className={`flex items-center gap-2 px-2 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50`}
             padding={"px-2 py-2"}
             disabled={!name.trim() || !email.trim()}
           >
@@ -172,35 +170,35 @@ function AssigneesTab() {
         </div>
       </form>
       <div>
-        <span className="block text-xs font-medium text-gray-700 mb-1">
+        <span className="mb-1 block text-xs font-medium text-gray-700">
           Users
         </span>
-        {assigneesData.list.length === 0 ? (
+        {users.length === 0 ? (
           <p className="text-xs text-gray-500 italic">
             No users added yet. Add team members to assign tasks.
           </p>
         ) : (
           <div className="flex flex-col gap-1.5">
-            {assigneesData.list.map((assignee) => (
+            {users.map((user) => (
               <div
-                key={assignee.id}
-                className="flex items-center justify-between gap-2 p-2 rounded border-1 border-slate-200"
+                key={user.id}
+                className="flex items-center justify-between gap-2 rounded border-1 border-slate-200 p-2"
               >
                 <div className="flex gap-2">
-                  <span className="avatar w-7 h-7 flex items-center justify-center rounded-[50%] overflow-hidden">
-                    <img src={assignee.avatar} alt={assignee.name}></img>
+                  <span className="avatar flex h-7 w-7 items-center justify-center overflow-hidden rounded-[50%]">
+                    <img src={user.avatar} alt={user.name}></img>
                   </span>
                   <div className="flex flex-col items-start">
-                    <span className="text-xs">{assignee.name}</span>
+                    <span className="text-xs">{user.name}</span>
                     <span className="text-[10px] text-gray-500">
-                      {assignee.email}
+                      {user.email}
                     </span>
                   </div>
                 </div>
                 <button
                   type="button"
-                  className="w-5 h-5 flex items-center justify-center hover:bg-gray-100 rounded-md hover:text-red-500 transition-colors duration-300 cursor-pointer"
-                  onClick={() => handleDeleteUser(assignee.id)}
+                  className="flex h-5 w-5 cursor-pointer items-center justify-center rounded-md transition-colors duration-300 hover:bg-gray-100 hover:text-red-500"
+                  onClick={() => handleDeleteUser(user.id)}
                 >
                   <Trash2 size={14} />
                 </button>
@@ -212,5 +210,3 @@ function AssigneesTab() {
     </div>
   );
 }
-
-export default AssigneesTab;

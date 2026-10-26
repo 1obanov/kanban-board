@@ -1,18 +1,19 @@
 import "react-datepicker/dist/react-datepicker.css";
 
-import { Dialog, DialogBackdrop,DialogPanel } from "@headlessui/react";
-import { Calendar,X } from "lucide-react";
-import { type FormEvent,useState } from "react";
+import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
+import { Calendar, X } from "lucide-react";
+import { type FormEvent, useState } from "react";
 import DatePicker from "react-datepicker";
 import { useDispatch, useSelector } from "react-redux";
 
 import Button from "../../../components/Button";
 import CustomSelect from "../../../components/CustomSelect";
-import type { Assignee } from "../../../data/assignees";
-import type { PriorityOption } from "../../../data/priorities";
 import type { AppDispatch, RootState } from "../../../store";
 import type { Task } from "../../../types/board";
+import type { PriorityOption } from "../../../types/priority";
+import type { User } from "../../../types/user";
 import { addTaskToColumn } from "../../board/boardSlice";
+import { selectPrioritiesOptions } from "../../filters/filterSelectors";
 import { addTask } from "../taskSlice";
 
 type AddTaskDialogProps = {
@@ -25,26 +26,27 @@ type AddTaskDialogProps = {
  *
  * Modal dialog for creating a new task and assigning it to a board column.
  */
-function AddTaskDialog({ isNewTaskOpen, onClose }: AddTaskDialogProps) {
-  const assigneesData = useSelector(
-    (state: RootState) => state.board.assigneesData,
-  );
-  const labelsData = useSelector((state: RootState) => state.board.labelsData);
-  const prioritiesData = useSelector(
-    (state: RootState) => state.board.prioritiesData,
+export default function AddTaskDialog({
+  isNewTaskOpen,
+  onClose,
+}: AddTaskDialogProps) {
+  const dispatch = useDispatch<AppDispatch>();
+
+  const { users, availableLabels } = useSelector(
+    (state: RootState) => state.board,
   );
 
-  const dispatch = useDispatch<AppDispatch>();
+  const prioritiesOption = useSelector(selectPrioritiesOptions);
 
   const [title, setTitle] = useState("");
   const [titleError, setTitleError] = useState("");
   const [description, setDescription] = useState("");
   const [dueDate, setDueDate] = useState(new Date());
   const [selectedPriority, setSelectedPriority] = useState<PriorityOption>(
-    prioritiesData.options[0],
+    prioritiesOption[0],
   );
   const [selectedLabels, setSelectedLabels] = useState<string[]>([]);
-  const [selectedAssignees, setSelectedAssignees] = useState<Assignee[]>([]);
+  const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
 
   /**
    * Toggle label selection by id
@@ -58,13 +60,13 @@ function AddTaskDialog({ isNewTaskOpen, onClose }: AddTaskDialogProps) {
   /**
    * Toggle assignee selection
    */
-  const toggleAssignee = (assignee: Assignee): void => {
+  const toggleAssignee = (assignee: User): void => {
     setSelectedAssignees((prev) => {
-      const exists = prev.some((el) => el.id === assignee.id);
+      const exists = prev.includes(assignee.id);
 
       return exists
-        ? prev.filter((el) => el.id !== assignee.id)
-        : [...prev, assignee];
+        ? prev.filter((id) => id !== assignee.id)
+        : [...prev, assignee.id];
     });
   };
 
@@ -85,9 +87,9 @@ function AddTaskDialog({ isNewTaskOpen, onClose }: AddTaskDialogProps) {
       id: crypto.randomUUID(),
       title: title.trim(),
       description,
-      assignees: selectedAssignees,
-      labels: selectedLabels,
-      priority: selectedPriority.value,
+      assigneeIds: selectedAssignees,
+      labelIds: selectedLabels,
+      priorityId: selectedPriority.value,
       dueDate: dueDate.toISOString(),
     };
 
@@ -97,7 +99,7 @@ function AddTaskDialog({ isNewTaskOpen, onClose }: AddTaskDialogProps) {
     setTitle("");
     setDescription("");
     setDueDate(new Date());
-    setSelectedPriority(prioritiesData.options[0]);
+    setSelectedPriority(prioritiesOption[0]);
     setSelectedLabels([]);
     setSelectedAssignees([]);
 
@@ -113,14 +115,15 @@ function AddTaskDialog({ isNewTaskOpen, onClose }: AddTaskDialogProps) {
     >
       <DialogBackdrop className="fixed inset-0 bg-black/30" />
       <div className="fixed inset-0 flex w-screen items-center justify-center p-4">
-        <DialogPanel className="w-full md:w-xl rounded-lg bg-white pb-5 h-full max-h-max overflow-auto">
-          <div className="flex justify-between sticky top-0 z-1 bg-white p-5">
+        <DialogPanel className="h-full max-h-max w-full overflow-auto rounded-lg bg-white pb-5 md:w-xl">
+          <div className="sticky top-0 z-1 flex justify-between bg-white p-5">
             <div>
               <h3 className="font-bold capitalize">Add New Task</h3>
               <p className="text-xs text-gray-500">Create a new task</p>
             </div>
             <button
-              className="w-5 h-5 flex items-center justify-center shrink-0 bg-gray-100 rounded-md cursor-pointer"
+              type="button"
+              className="flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center rounded-md bg-gray-100"
               onClick={onClose}
             >
               <X size={14} />
@@ -130,7 +133,7 @@ function AddTaskDialog({ isNewTaskOpen, onClose }: AddTaskDialogProps) {
             <div>
               <label
                 htmlFor="title"
-                className="block text-xs font-medium text-gray-700 mb-1"
+                className="mb-1 block text-xs font-medium text-gray-700"
               >
                 Title
                 <span className="text-black">*</span>
@@ -148,7 +151,7 @@ function AddTaskDialog({ isNewTaskOpen, onClose }: AddTaskDialogProps) {
                 }}
                 placeholder="Enter task title"
                 required
-                className={`w-full border rounded-md p-2 text-sm focus:outline-none ${
+                className={`w-full rounded-md border p-2 text-sm focus:outline-none ${
                   titleError
                     ? "border-red-500"
                     : "border-slate-300 focus:border-slate-400"
@@ -161,7 +164,7 @@ function AddTaskDialog({ isNewTaskOpen, onClose }: AddTaskDialogProps) {
             <div>
               <label
                 htmlFor="description"
-                className="block text-xs font-medium text-gray-700 mb-1"
+                className="mb-1 block text-xs font-medium text-gray-700"
               >
                 Description
               </label>
@@ -172,14 +175,14 @@ function AddTaskDialog({ isNewTaskOpen, onClose }: AddTaskDialogProps) {
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Enter task description"
                 rows={4}
-                className="w-full border border-slate-300 rounded-md p-2 text-sm focus:outline-none focus:border-slate-400 resize-none"
+                className="w-full resize-none rounded-md border border-slate-300 p-2 text-sm focus:border-slate-400 focus:outline-none"
               />
             </div>
-            <div className="grid md:grid-cols-2 gap-2">
+            <div className="grid gap-2 md:grid-cols-2">
               <div>
                 <label
                   htmlFor="select"
-                  className="block text-xs font-medium text-gray-700 mb-1"
+                  className="mb-1 block text-xs font-medium text-gray-700"
                 >
                   Priority
                   <span className="text-black">*</span>
@@ -191,7 +194,7 @@ function AddTaskDialog({ isNewTaskOpen, onClose }: AddTaskDialogProps) {
                       setSelectedPriority(value as PriorityOption);
                     }
                   }}
-                  options={prioritiesData.options}
+                  options={prioritiesOption}
                   placeholder="Priority"
                   optionType="priority"
                   isMulti={false}
@@ -200,7 +203,7 @@ function AddTaskDialog({ isNewTaskOpen, onClose }: AddTaskDialogProps) {
               <div>
                 <label
                   htmlFor="due-date"
-                  className="block text-xs font-medium text-gray-700 mb-1"
+                  className="mb-1 block text-xs font-medium text-gray-700"
                 >
                   Due date
                 </label>
@@ -212,43 +215,41 @@ function AddTaskDialog({ isNewTaskOpen, onClose }: AddTaskDialogProps) {
                     if (date) setDueDate(date);
                   }}
                   icon={<Calendar size={14} />}
-                  className="w-full border border-slate-300 rounded-md !p-2 !ps-7 text-sm focus:outline-none focus:border-slate-400"
+                  className="w-full rounded-md border border-slate-300 !p-2 !ps-7 text-sm focus:border-slate-400 focus:outline-none"
                 />
               </div>
             </div>
             <div>
-              <span className="block text-xs font-medium text-gray-700 mb-1">
+              <span className="mb-1 block text-xs font-medium text-gray-700">
                 Assignees
               </span>
 
-              {assigneesData.list.length === 0 ? (
+              {users.length === 0 ? (
                 <p className="text-xs text-gray-500 italic">
                   No team members available. Please add users in{" "}
                   <span className="font-medium underline">Settings</span> first.
                 </p>
               ) : (
                 <div className="flex flex-col gap-1">
-                  {assigneesData.list.map((assignee) => {
-                    const isActive = selectedAssignees.some(
-                      (el) => el.id === assignee.id,
-                    );
+                  {users.map((user) => {
+                    const isActive = selectedAssignees.includes(user.id);
 
                     return (
                       <button
                         type="button"
-                        key={assignee.id}
-                        onClick={() => toggleAssignee(assignee)}
-                        className={`flex gap-2 p-2 rounded cursor-pointer transition-colors duration-300 ${
+                        key={user.id}
+                        onClick={() => toggleAssignee(user)}
+                        className={`flex cursor-pointer gap-2 rounded p-2 transition-colors duration-300 ${
                           isActive ? "bg-slate-100" : "hover:bg-slate-100"
                         }`}
                       >
-                        <span className="avatar w-7 h-7 flex items-center justify-center rounded-[50%] overflow-hidden">
-                          <img src={assignee.avatar} alt={assignee.name} />
+                        <span className="avatar flex h-7 w-7 items-center justify-center overflow-hidden rounded-[50%]">
+                          <img src={user.avatar} alt={user.name} />
                         </span>
                         <div className="flex flex-col items-start">
-                          <span className="text-xs">{assignee.name}</span>
+                          <span className="text-xs">{user.name}</span>
                           <span className="text-[10px] text-gray-500">
-                            {assignee.email}
+                            {user.email}
                           </span>
                         </div>
                       </button>
@@ -259,17 +260,17 @@ function AddTaskDialog({ isNewTaskOpen, onClose }: AddTaskDialogProps) {
             </div>
 
             <div>
-              <span className="block text-xs font-medium text-gray-700 mb-1">
+              <span className="mb-1 block text-xs font-medium text-gray-700">
                 Lables
               </span>
-              {labelsData.list.length === 0 ? (
+              {availableLabels.length === 0 ? (
                 <p className="text-xs text-gray-500 italic">
                   No labels available. Please add labels in{" "}
                   <span className="font-medium underline">Settings</span> first.
                 </p>
               ) : (
                 <div className="flex flex-wrap gap-1">
-                  {labelsData.list.map((label) => {
+                  {availableLabels.map((label) => {
                     const isActive = selectedLabels.includes(label.id);
 
                     return (
@@ -277,7 +278,7 @@ function AddTaskDialog({ isNewTaskOpen, onClose }: AddTaskDialogProps) {
                         type="button"
                         key={label.id}
                         onClick={() => toggleLabel(label.id)}
-                        className="block capitalize text-[10px] py-0.5 px-2 rounded-lg max-w-max cursor-pointer"
+                        className="block max-w-max cursor-pointer rounded-lg px-2 py-0.5 text-[10px] capitalize"
                         style={{
                           backgroundColor: isActive
                             ? label.color
@@ -311,5 +312,3 @@ function AddTaskDialog({ isNewTaskOpen, onClose }: AddTaskDialogProps) {
     </Dialog>
   );
 }
-
-export default AddTaskDialog;

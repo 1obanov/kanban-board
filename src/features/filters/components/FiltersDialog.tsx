@@ -1,5 +1,5 @@
-import { Dialog, DialogBackdrop,DialogPanel } from "@headlessui/react";
-import { Flag,Tag, Users, X } from "lucide-react";
+import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
+import { Flag, Tag, Users, X } from "lucide-react";
 import {
   type Dispatch,
   type FormEvent,
@@ -10,10 +10,15 @@ import {
 import { useDispatch, useSelector } from "react-redux";
 
 import Button from "../../../components/Button";
-import type { AssigneeOption } from "../../../data/assignees";
-import type { LabelOption } from "../../../data/labels";
-import type { PriorityID, PriorityOption } from "../../../data/priorities";
 import type { AppDispatch, RootState } from "../../../store";
+import type { LabelOption } from "../../../types/label";
+import type { PriorityID, PriorityOption } from "../../../types/priority";
+import type { UserOption } from "../../../types/user";
+import {
+  selectLabelsOptions,
+  selectPrioritiesOptions,
+  selectUserOptions,
+} from "../filterSelectors";
 import { setAssignees, setLabels, setPriorities } from "../filtersSlice";
 import FilterSection from "./FilterSection";
 
@@ -23,11 +28,14 @@ type FiltersDialogProps = {
 };
 
 /** Dialog component to manage task filters */
-function FiltersDialog({ isFiltersOpen, onClose }: FiltersDialogProps) {
+export default function FiltersDialog({
+  isFiltersOpen,
+  onClose,
+}: FiltersDialogProps) {
   const dispatch = useDispatch<AppDispatch>();
 
   /** Get board data for filter options */
-  const { assigneesData, labelsData, prioritiesData } = useSelector(
+  const { users, availableLabels, availablePriorities } = useSelector(
     (state: RootState) => state.board,
   );
 
@@ -36,9 +44,13 @@ function FiltersDialog({ isFiltersOpen, onClose }: FiltersDialogProps) {
     (state: RootState) => state.filters,
   );
 
+  const userOptions = useSelector(selectUserOptions);
+  const labelsOption = useSelector(selectLabelsOptions);
+  const prioritiesOption = useSelector(selectPrioritiesOptions);
+
   /** Local state for selected filters */
   const [selectedAssignees, setSelectedAssignees] =
-    useState<AssigneeOption[]>(assignees);
+    useState<UserOption[]>(assignees);
   const [selectedLabels, setSelectedLabels] = useState<LabelOption[]>(labels);
   const [selectedPriorities, setSelectedPriorities] =
     useState<PriorityID[]>(priorities);
@@ -98,8 +110,8 @@ function FiltersDialog({ isFiltersOpen, onClose }: FiltersDialogProps) {
     >
       <DialogBackdrop className="fixed inset-0 bg-black/30" />
       <div className="fixed inset-0 flex w-screen items-center justify-center p-4">
-        <DialogPanel className="w-full md:w-xl rounded-lg bg-white pb-5 h-full max-h-max overflow-auto">
-          <div className="flex justify-between sticky top-0 z-1 bg-white p-5">
+        <DialogPanel className="h-full max-h-max w-full overflow-auto rounded-lg bg-white pb-5 md:w-xl">
+          <div className="sticky top-0 z-1 flex justify-between bg-white p-5">
             <div>
               <h3 className="font-bold capitalize">Filters</h3>
               <p className="text-xs text-gray-500">
@@ -107,7 +119,8 @@ function FiltersDialog({ isFiltersOpen, onClose }: FiltersDialogProps) {
               </p>
             </div>
             <button
-              className="w-5 h-5 flex items-center justify-center shrink-0 bg-gray-100 rounded-md cursor-pointer"
+              type="button"
+              className="flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center rounded-md bg-gray-100"
               onClick={onClose}
             >
               <X size={14} />
@@ -117,8 +130,8 @@ function FiltersDialog({ isFiltersOpen, onClose }: FiltersDialogProps) {
             <FilterSection
               title="Assignees"
               icon={Users}
-              list={assigneesData.list}
-              options={assigneesData.options}
+              list={users}
+              options={userOptions}
               selected={selectedAssignees}
               onToggle={toggleOption(setSelectedAssignees)}
               onClear={clearOptions(setSelectedAssignees)}
@@ -132,8 +145,8 @@ function FiltersDialog({ isFiltersOpen, onClose }: FiltersDialogProps) {
             <FilterSection
               title="Labels"
               icon={Tag}
-              list={labelsData.list}
-              options={labelsData.options}
+              list={availableLabels}
+              options={labelsOption}
               selected={selectedLabels}
               onToggle={toggleOption(setSelectedLabels)}
               onClear={clearOptions(setSelectedLabels)}
@@ -147,8 +160,8 @@ function FiltersDialog({ isFiltersOpen, onClose }: FiltersDialogProps) {
             <FilterSection
               title="Priority"
               icon={Flag}
-              list={prioritiesData.list}
-              options={prioritiesData.options}
+              list={availablePriorities}
+              options={prioritiesOption}
               selected={selectedPriorities}
               onToggle={togglePriority}
               onClear={clearOptions(setSelectedPriorities)}
@@ -173,5 +186,3 @@ function FiltersDialog({ isFiltersOpen, onClose }: FiltersDialogProps) {
     </Dialog>
   );
 }
-
-export default FiltersDialog;

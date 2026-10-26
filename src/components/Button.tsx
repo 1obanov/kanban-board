@@ -16,7 +16,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 /**
  * Reusable Button component
  */
-const Button = ({
+export default function Button({
   children,
   onClick,
   className,
@@ -28,7 +28,7 @@ const Button = ({
   padding = "px-4 py-2.5",
   hoverBgColor = "hover:bg-slate-800",
   ...props
-}: ButtonProps) => {
+}: ButtonProps) {
   return (
     <button
       onClick={onClick}
@@ -48,6 +48,4 @@ const Button = ({
       {children}
     </button>
   );
-};
-
-export default Button;
+}

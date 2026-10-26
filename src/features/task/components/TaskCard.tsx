@@ -21,24 +21,23 @@ type TaskCardProps = {
  * Displays a single task in either board or list view.
  * Handles task edit and delete actions.
  */
-function TaskCard({ task }: TaskCardProps) {
-  const prioritiesData = useSelector(
-    (state: RootState) => state.board.prioritiesData,
+export default function TaskCard({ task }: TaskCardProps) {
+  const dispatch = useDispatch<AppDispatch>();
+
+  const { availablePriorities, viewMode } = useSelector(
+    (state: RootState) => state.board,
   );
-  const viewMode = useSelector((state: RootState) => state.board.viewMode);
 
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
-  const dispatch = useDispatch<AppDispatch>();
-
   // Resolve priority config by id
-  const priority = prioritiesData.list.find(
-    (option) => option.id === task.priority,
+  const priority = availablePriorities.find(
+    (priority) => priority.id === task.priorityId,
   );
 
   if (!priority) {
-    throw new Error(`Priority "${task.priority}" not found`);
+    throw new Error(`Priority "${task.priorityId}" not found`);
   }
 
   const isExpired = isDateExpired(task.dueDate);
@@ -83,5 +82,3 @@ function TaskCard({ task }: TaskCardProps) {
     </>
   );
 }
-
-export default TaskCard;

@@ -1,6 +1,6 @@
 import { Check, type LucideIcon } from "lucide-react";
 
-import type { PriorityID } from "../../../data/priorities";
+import type { PriorityID } from "../../../types/priority";
 
 type FilterTitle = "Assignees" | "Labels" | "Priority";
 
@@ -26,7 +26,7 @@ type FilterSectionProps<Option extends FilterOption, Item> = {
  * Renders a list of filter options with selectable checkboxes and a "Clear All" button.
  * Used in the FiltersDialog for Assignees, Labels, and Priorities.
  */
-function FilterSection<Option extends FilterOption, Item>({
+export default function FilterSection<Option extends FilterOption, Item>({
   title,
   icon: Icon,
   list = [],
@@ -40,7 +40,7 @@ function FilterSection<Option extends FilterOption, Item>({
 
   return (
     <div>
-      <span className="flex items-center justify-between pb-1 mb-1 border-b border-slate-200">
+      <span className="mb-1 flex items-center justify-between border-b border-slate-200 pb-1">
         <span className="flex items-center gap-1 text-sm font-medium text-gray-700">
           <Icon size={14} />
           {title}
@@ -49,7 +49,7 @@ function FilterSection<Option extends FilterOption, Item>({
           <button
             type="button"
             onClick={onClear}
-            className="text-sm cursor-pointer underline"
+            className="cursor-pointer text-sm underline"
           >
             Clear All
           </button>
@@ -74,10 +74,10 @@ function FilterSection<Option extends FilterOption, Item>({
                   type="button"
                   key={option.value}
                   onClick={() => onToggle(option)}
-                  className="flex items-center gap-1.5 py-2 rounded cursor-pointer transition-colors duration-300"
+                  className="flex cursor-pointer items-center gap-1.5 rounded py-2 transition-colors duration-300"
                 >
                   <span
-                    className={`flex items-center justify-center w-4 h-4 rounded-sm border ${
+                    className={`flex h-4 w-4 items-center justify-center rounded-sm border ${
                       isActive
                         ? "border-slate-900 bg-slate-900 text-slate-50"
                         : "border-gray-300"
@@ -96,5 +96,3 @@ function FilterSection<Option extends FilterOption, Item>({
     </div>
   );
 }
-
-export default FilterSection;

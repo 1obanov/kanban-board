@@ -4,7 +4,7 @@ import {
   Droppable,
   type DropResult,
 } from "@hello-pangea/dnd";
-import { useDispatch,useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
 import type { AppDispatch, RootState } from "../../../store";
 import TaskCard from "../../task/components/TaskCard";
@@ -18,11 +18,12 @@ import ListColumn from "./ListColumn";
  * - Supports drag & drop between columns
  * - Renders in board or list view based on state
  */
-function Board() {
-  const columns = useSelector((state: RootState) => state.board.columns);
-  const viewMode = useSelector((state: RootState) => state.board.viewMode);
-  const tasks = useSelector(selectFilteredTasks);
+export default function Board() {
   const dispatch = useDispatch<AppDispatch>();
+
+  const { columns, viewMode } = useSelector((state: RootState) => state.board);
+
+  const tasks = useSelector(selectFilteredTasks);
 
   /** Handle drag & drop end */
   const handleDragEnd = (result: DropResult) => {
@@ -46,10 +47,10 @@ function Board() {
 
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
-      <div className="p-3 h-full overflow-hidden">
+      <div className="h-full overflow-hidden p-3">
         {viewMode === "board" ? (
           // Grid view
-          <div className="grid auto-cols-[minmax(280px,1fr)] grid-flow-col gap-2.5 h-full overflow-x-auto">
+          <div className="grid h-full auto-cols-[minmax(280px,1fr)] grid-flow-col gap-2.5 overflow-x-auto">
             {columns.map((column) => (
               <Droppable key={column.id} droppableId={column.id}>
                 {(provided) => (
@@ -88,7 +89,7 @@ function Board() {
           </div>
         ) : (
           // List view
-          <div className="h-full flex flex-col gap-4 overflow-y-auto">
+          <div className="flex h-full flex-col gap-4 overflow-y-auto">
             {columns.map((column) => {
               // Only show tasks that pass filters
               const colTasks = column.taskIds
@@ -106,7 +107,7 @@ function Board() {
                       <div
                         ref={provided.innerRef}
                         {...provided.droppableProps}
-                        className="flex flex-col gap-2.5 min-h-[40px]"
+                        className="flex min-h-[40px] flex-col gap-2.5"
                       >
                         {colTasks.map((task, index) => (
                           <Draggable
@@ -138,5 +139,3 @@ function Board() {
     </DragDropContext>
   );
 }
-
-export default Board;
