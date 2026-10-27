@@ -16,7 +16,7 @@ import type { AppDispatch, RootState } from "./store";
 export default function App() {
   const dispatch = useDispatch<AppDispatch>();
 
-  const { status, error } = useSelector((state: RootState) => state.boardData);
+  const { status, error } = useSelector((state: RootState) => state.board);
 
   const [isNewTaskOpen, setIsNewTaskOpen] = useState(false);
   const [isSettingOpen, setIsSettingOpen] = useState(false);

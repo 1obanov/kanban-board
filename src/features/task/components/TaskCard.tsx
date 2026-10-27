@@ -2,10 +2,10 @@ import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import type { AppDispatch, RootState } from "../../../store";
-import type { Task } from "../../../types/board";
+import type { BoardColumn, Task } from "../../../types/board";
 import { isDateExpired } from "../../../utils/dateUtils";
-import { deleteTaskFromColumn } from "../../board/boardSlice";
-import { deleteTask } from "../taskSlice";
+import { deleteTaskFromColumnThunk } from "../../columns/columnsThunks";
+import { deleteTaskThunk } from "../tasksThunks";
 import BoardTaskCard from "./BoardTaskCard";
 import DeleteTaskDialog from "./DeleteTaskDialog";
 import ListTaskCard from "./ListTaskCard";
@@ -13,6 +13,7 @@ import UpdateTaskDialog from "./UpdateTaskDialog";
 
 type TaskCardProps = {
   task: Task;
+  columnId: BoardColumn["id"];
 };
 
 /**
@@ -21,7 +22,7 @@ type TaskCardProps = {
  * Displays a single task in either board or list view.
  * Handles task edit and delete actions.
  */
-export default function TaskCard({ task }: TaskCardProps) {
+export default function TaskCard({ task, columnId }: TaskCardProps) {
   const dispatch = useDispatch<AppDispatch>();
 
   const { availablePriorities, viewMode } = useSelector(
@@ -43,10 +44,21 @@ export default function TaskCard({ task }: TaskCardProps) {
   const isExpired = isDateExpired(task.dueDate);
 
   // Remove task from store and column
-  const handleDeleteTask = (): void => {
-    dispatch(deleteTask(task.id));
-    dispatch(deleteTaskFromColumn(task.id));
-    setIsDeleteOpen(false);
+  const handleDeleteTask = async (): Promise<void> => {
+    try {
+      await dispatch(deleteTaskThunk(task.id)).unwrap();
+
+      await dispatch(
+        deleteTaskFromColumnThunk({
+          taskId: task.id,
+          columnId,
+        }),
+      ).unwrap();
+
+      setIsDeleteOpen(false);
+    } catch (error) {
+      console.error("Failed to delete task:", error);
+    }
   };
 
   return (

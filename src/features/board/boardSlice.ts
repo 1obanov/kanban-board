@@ -1,6 +1,7 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
-import type { BoardColumn, Task, ViewMode } from "../../types/board";
+import type { ViewMode } from "../../types/board";
+import type { RequestError, RequestStatus } from "../../types/common";
 import type { Label } from "../../types/label";
 import type { Priority } from "../../types/priority";
 import type { User } from "../../types/user";
@@ -10,20 +11,9 @@ type BoardState = {
   users: User[];
   availableLabels: Label[];
   availablePriorities: Priority[];
-  columns: BoardColumn[];
   viewMode: ViewMode;
-};
-
-type MoveTaskInColumnPayload = {
-  taskId: Task["id"];
-  sourceColumnId: BoardColumn["id"];
-  destinationColumnId: BoardColumn["id"];
-  destinationIndex: number;
-};
-
-type AddTaskToColumnPayload = {
-  taskId: Task["id"];
-  columnId: BoardColumn["id"];
+  status: RequestStatus;
+  error: RequestError;
 };
 
 /**
@@ -33,8 +23,9 @@ const initialState: BoardState = {
   users: [],
   availableLabels: [],
   availablePriorities: [],
-  columns: [],
   viewMode: "board",
+  status: "idle",
+  error: null,
 };
 
 const boardSlice = createSlice({
@@ -44,57 +35,6 @@ const boardSlice = createSlice({
     /** Set current board view mode */
     setViewMode(state, action: PayloadAction<ViewMode>) {
       state.viewMode = action.payload;
-    },
-
-    /** Change name of column */
-    changeColumnName(
-      state,
-      action: PayloadAction<Pick<BoardColumn, "id" | "title">>,
-    ) {
-      const { id, title } = action.payload;
-
-      const column = state.columns.find((col) => col.id === id);
-
-      if (column) {
-        column.title = title;
-      }
-    },
-
-    /** Add task ID to a column */
-    addTaskToColumn(state, action: PayloadAction<AddTaskToColumnPayload>) {
-      const { taskId, columnId } = action.payload;
-
-      const column = state.columns.find((col) => col.id === columnId);
-
-      if (column) {
-        column.taskIds.push(taskId);
-      }
-    },
-
-    /** Remove task ID from its column */
-    deleteTaskFromColumn(state, action: PayloadAction<Task["id"]>) {
-      const taskId = action.payload;
-      const column = state.columns.find((col) => col.taskIds.includes(taskId));
-
-      if (column) {
-        column.taskIds = column.taskIds.filter((id) => id !== taskId);
-      }
-    },
-
-    /** Move task between columns or reorder within the same column */
-    moveTaskInColumn(state, action: PayloadAction<MoveTaskInColumnPayload>) {
-      const { taskId, sourceColumnId, destinationColumnId, destinationIndex } =
-        action.payload;
-
-      const sourceCol = state.columns.find((col) => col.id === sourceColumnId);
-      const destCol = state.columns.find(
-        (col) => col.id === destinationColumnId,
-      );
-
-      if (!sourceCol || !destCol) return;
-
-      sourceCol.taskIds = sourceCol.taskIds.filter((id) => id !== taskId);
-      destCol.taskIds.splice(destinationIndex, 0, taskId);
     },
 
     /** Add a new user to the board */
@@ -124,25 +64,27 @@ const boardSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
-    builder.addCase(fetchBoardData.fulfilled, (state, action) => {
-      state.columns = action.payload.columns;
-      state.users = action.payload.users;
-      state.availableLabels = action.payload.labels;
-      state.availablePriorities = action.payload.priorities;
-    });
+    builder
+      .addCase(fetchBoardData.pending, (state) => {
+        state.status = "loading";
+        state.error = null;
+      })
+      .addCase(fetchBoardData.fulfilled, (state, action) => {
+        state.users = action.payload.users;
+        state.availableLabels = action.payload.labels;
+        state.availablePriorities = action.payload.priorities;
+
+        state.status = "succeeded";
+        state.error = null;
+      })
+      .addCase(fetchBoardData.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = action.error.message ?? "Failed to load board data.";
+      });
   },
 });
 
-export const {
-  setViewMode,
-  changeColumnName,
-  addTaskToColumn,
-  deleteTaskFromColumn,
-  moveTaskInColumn,
-  addUser,
-  deleteUser,
-  addLabel,
-  deleteLabel,
-} = boardSlice.actions;
+export const { setViewMode, addUser, deleteUser, addLabel, deleteLabel } =
+  boardSlice.actions;
 
 export default boardSlice.reducer;

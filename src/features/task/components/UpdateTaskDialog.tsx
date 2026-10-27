@@ -13,7 +13,7 @@ import type { Task } from "../../../types/board";
 import type { PriorityOption } from "../../../types/priority";
 import type { User } from "../../../types/user";
 import { selectPrioritiesOptions } from "../../filters/filterSelectors";
-import { updateTask } from "../taskSlice";
+import { updateTaskThunk } from "../tasksThunks";
 
 type UpdateTaskDialogProps = {
   task: Task;
@@ -36,6 +36,12 @@ export default function UpdateTaskDialog({
   const { users, availableLabels } = useSelector(
     (state: RootState) => state.board,
   );
+
+  const { updateStatus, updateError } = useSelector(
+    (state: RootState) => state.tasks,
+  );
+
+  const isSubmitting = updateStatus === "loading";
 
   const prioritiesOption = useSelector(selectPrioritiesOptions);
 
@@ -80,7 +86,9 @@ export default function UpdateTaskDialog({
   };
 
   // Submit updated task data
-  const handleUpdateTask = (e: FormEvent<HTMLFormElement>) => {
+  const handleUpdateTask = async (
+    e: FormEvent<HTMLFormElement>,
+  ): Promise<void> => {
     e.preventDefault();
 
     if (!title.trim()) {
@@ -99,10 +107,13 @@ export default function UpdateTaskDialog({
       dueDate: dueDate.toISOString(),
     };
 
-    // Update task in store
-    dispatch(updateTask({ id: task.id, updatedFields }));
+    try {
+      await dispatch(updateTaskThunk({ id: task.id, updatedFields })).unwrap();
 
-    onClose();
+      onClose();
+    } catch (error) {
+      console.error("Failed to update task:", error);
+    }
   };
 
   useEffect(() => {
@@ -320,11 +331,27 @@ export default function UpdateTaskDialog({
                 bgColor={"bg-white"}
                 textColor={"text-black"}
                 hoverBgColor={"hover:bg-gray-100"}
+                minWidth="min-w-[50%] md:min-w-30"
               >
                 Cancel
               </Button>
-              <Button type="submit">Save changes</Button>
+              <Button
+                type="submit"
+                minWidth="min-w-[50%] md:min-w-30"
+                disabledHoverBgColor="disabled:hover:bg-slate-900"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Saving..." : "Save changes"}
+              </Button>
             </div>
+            {updateError && (
+              <p
+                className="rounded-lg border border-red-100 bg-red-50 px-2 py-2 text-center text-sm text-red-700"
+                role="alert"
+              >
+                {updateError}
+              </p>
+            )}
           </form>
         </DialogPanel>
       </div>

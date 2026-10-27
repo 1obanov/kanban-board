@@ -28,7 +28,7 @@ export default function BoardTaskCard({
   return (
     <div className="group card relative cursor-grab rounded-lg border-1 border-slate-300 bg-white p-2 active:cursor-grabbing">
       <div className="card__priority mb-3">
-        <div className="flex items-center justify-between gap-1">
+        <div className="relative flex items-center justify-between gap-1">
           <div className="flex items-center gap-1">
             <span
               className="block h-2.5 w-2.5 rounded-[50%]"
@@ -81,7 +81,7 @@ export default function BoardTaskCard({
       </div>
       <div className="flex items-center justify-between gap-1">
         <span
-          className={`date flex items-center gap-1 text-xs ${
+          className={`date flex items-center gap-1 text-xs leading-5 ${
             isExpired ? "text-red-400" : "text-gray-500"
           }`}
         >

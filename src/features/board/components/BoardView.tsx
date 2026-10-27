@@ -1,19 +1,19 @@
 import { EllipsisVertical } from "lucide-react";
 import { forwardRef, type ReactNode } from "react";
 
-import type { BoardColumn as BoardColumnModel } from "../../../types/board";
+import type { BoardColumn } from "../../../types/board";
 
-type BoardColumnProps = {
-  title: BoardColumnModel["title"];
+type BoardViewProps = {
+  title: BoardColumn["title"];
   countTasks: number;
   onEdit: () => void;
   children: ReactNode;
 };
 
 /**
- * BoardColumn component for Kanban board
+ * BoardView component for Kanban board
  */
-const BoardColumn = forwardRef<HTMLDivElement, BoardColumnProps>(
+const BoardView = forwardRef<HTMLDivElement, BoardViewProps>(
   ({ title, countTasks, onEdit, children, ...props }, ref) => {
     return (
       <>
@@ -49,6 +49,6 @@ const BoardColumn = forwardRef<HTMLDivElement, BoardColumnProps>(
   },
 );
 
-BoardColumn.displayName = "BoardColumn";
+BoardView.displayName = "BoardView";
 
-export default BoardColumn;
+export default BoardView;

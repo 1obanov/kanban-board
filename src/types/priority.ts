@@ -1,7 +1,5 @@
 export type PriorityID = "low" | "medium" | "high" | "critical";
 
-export type PriorityName = Capitalize<PriorityID>;
-
 type PriorityNameByID = {
   [ID in PriorityID]: Capitalize<ID>;
 };

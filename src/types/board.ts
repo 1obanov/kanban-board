@@ -17,8 +17,3 @@ export type Task = {
   priorityId: PriorityID;
   dueDate: string;
 };
-
-export type Board = {
-  columns: BoardColumn[];
-  tasks: Task[];
-};

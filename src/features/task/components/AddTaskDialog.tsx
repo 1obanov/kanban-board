@@ -12,9 +12,9 @@ import type { AppDispatch, RootState } from "../../../store";
 import type { Task } from "../../../types/board";
 import type { PriorityOption } from "../../../types/priority";
 import type { User } from "../../../types/user";
-import { addTaskToColumn } from "../../board/boardSlice";
+import { addTaskToColumnThunk } from "../../columns/columnsThunks";
 import { selectPrioritiesOptions } from "../../filters/filterSelectors";
-import { addTask } from "../taskSlice";
+import { createTaskThunk } from "../tasksThunks";
 
 type AddTaskDialogProps = {
   isNewTaskOpen: boolean;
@@ -35,6 +35,17 @@ export default function AddTaskDialog({
   const { users, availableLabels } = useSelector(
     (state: RootState) => state.board,
   );
+
+  const { addTaskToColumnStatus, addTaskToColumnError } = useSelector(
+    (state: RootState) => state.columns,
+  );
+
+  const { createStatus, createError } = useSelector(
+    (state: RootState) => state.tasks,
+  );
+
+  const isSubmitting =
+    createStatus === "loading" || addTaskToColumnStatus === "loading";
 
   const prioritiesOption = useSelector(selectPrioritiesOptions);
 
@@ -73,7 +84,9 @@ export default function AddTaskDialog({
   /**
    * Validate form and create a new task
    */
-  const handleAddTask = (e: FormEvent<HTMLFormElement>): void => {
+  const handleAddTask = async (
+    e: FormEvent<HTMLFormElement>,
+  ): Promise<void> => {
     e.preventDefault();
 
     if (!title.trim()) {
@@ -83,8 +96,7 @@ export default function AddTaskDialog({
 
     setTitleError("");
 
-    const newTask: Task = {
-      id: crypto.randomUUID(),
+    const newTask: Omit<Task, "id"> = {
       title: title.trim(),
       description,
       assigneeIds: selectedAssignees,
@@ -93,17 +105,26 @@ export default function AddTaskDialog({
       dueDate: dueDate.toISOString(),
     };
 
-    dispatch(addTask(newTask));
-    dispatch(addTaskToColumn({ taskId: newTask.id, columnId: "todo" }));
+    try {
+      const createdTask = await dispatch(createTaskThunk(newTask)).unwrap();
 
-    setTitle("");
-    setDescription("");
-    setDueDate(new Date());
-    setSelectedPriority(prioritiesOption[0]);
-    setSelectedLabels([]);
-    setSelectedAssignees([]);
+      await dispatch(
+        addTaskToColumnThunk({
+          taskId: createdTask.id,
+          columnId: "todo",
+        }),
+      ).unwrap();
 
-    onClose();
+      setTitle("");
+      setDescription("");
+      setDueDate(new Date());
+      setSelectedPriority(prioritiesOption[0]);
+      setSelectedLabels([]);
+      setSelectedAssignees([]);
+      onClose();
+    } catch (error) {
+      console.error("Failed to save task:", error);
+    }
   };
 
   useEffect(() => {
@@ -313,11 +334,36 @@ export default function AddTaskDialog({
                 bgColor={"bg-white"}
                 textColor={"text-black"}
                 hoverBgColor={"hover:bg-gray-100"}
+                minWidth="min-w-[50%] md:min-w-30"
               >
                 Cancel
               </Button>
-              <Button type="submit">Add Card</Button>
+              <Button
+                type="submit"
+                minWidth="min-w-[50%] md:min-w-30"
+                disabledHoverBgColor="disabled:hover:bg-slate-900"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Creating..." : "Add Task"}
+              </Button>
             </div>
+            {createError && (
+              <p
+                className="rounded-lg border border-red-100 bg-red-50 px-2 py-2 text-center text-sm text-red-700"
+                role="alert"
+              >
+                {createError}
+              </p>
+            )}
+
+            {addTaskToColumnError && (
+              <p
+                className="rounded-lg border border-red-100 bg-red-50 px-2 py-2 text-center text-sm text-red-700"
+                role="alert"
+              >
+                {addTaskToColumnError}
+              </p>
+            )}
           </form>
         </DialogPanel>
       </div>

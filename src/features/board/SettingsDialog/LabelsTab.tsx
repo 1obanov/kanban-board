@@ -1,5 +1,5 @@
 import { Sketch } from "@uiw/react-color";
-import { Tag, X } from "lucide-react";
+import { LoaderCircle, Tag, X } from "lucide-react";
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
@@ -27,6 +27,9 @@ export default function LabelsTab() {
   const [color, setColor] = useState("#ff0000");
   const [displayColorPicker, setDisplayColorPicker] = useState(false);
   const pickerRef = useRef<HTMLDivElement>(null);
+  const [deletingLabelId, setDeletingLabelId] = useState<Label["id"] | null>(
+    null,
+  );
 
   /** Add new label */
   const handleAddLabel = (e: FormEvent<HTMLFormElement>) => {
@@ -67,8 +70,16 @@ export default function LabelsTab() {
   };
 
   /** Delete a label */
-  const handleDeleteLabel = (labelId: Label["id"]) => {
-    dispatch(removeLabel(labelId));
+  const handleDeleteLabel = async (labelId: Label["id"]): Promise<void> => {
+    try {
+      setDeletingLabelId(labelId);
+
+      await dispatch(removeLabel(labelId));
+    } catch (error) {
+      console.error("Failed to delete label:", error);
+    } finally {
+      setDeletingLabelId(null);
+    }
   };
 
   // Close color picker when clicking outside
@@ -154,13 +165,9 @@ export default function LabelsTab() {
         <div>
           <Button
             type="submit"
-            className={`flex items-center gap-2 px-2 py-2 text-sm ${
-              !labelName.trim()
-                ? "!cursor-default opacity-50 hover:bg-slate-900"
-                : ""
-            }`}
+            className={`flex items-center gap-2 text-sm`}
             padding={"px-2 py-2"}
-            disabled={!labelName.trim()}
+            disabledHoverBgColor="disabled:hover:bg-slate-900"
           >
             <Tag size={14} />
             Add label
@@ -177,27 +184,38 @@ export default function LabelsTab() {
           </p>
         ) : (
           <div className="flex flex-wrap gap-1">
-            {availableLabels.map((label) => (
-              <div
-                key={label.id}
-                className="flex max-w-max items-center justify-between gap-1 rounded-lg px-2 py-0.5 text-[10px] capitalize"
-                style={{
-                  backgroundColor: `${label.color}20`,
-                  color: label.color,
-                }}
-              >
-                {label.name}
+            {availableLabels.map((label) => {
+              const isDeleting = deletingLabelId === label.id;
 
-                <button
-                  type="button"
-                  onClick={() => handleDeleteLabel(label.id)}
-                  style={{ backgroundColor: label.color }}
-                  className="flex h-3 w-3 cursor-pointer items-center justify-center rounded-full text-white transition duration-300 hover:bg-gray-200"
+              return (
+                <div
+                  key={label.id}
+                  className={`flex max-w-max items-center justify-between gap-1 rounded-lg px-2 py-0.5 text-[10px] capitalize transition-opacity duration-200 ${
+                    isDeleting ? "pointer-events-none opacity-50" : ""
+                  }`}
+                  style={{
+                    backgroundColor: `${label.color}20`,
+                    color: label.color,
+                  }}
                 >
-                  <X size={10} />
-                </button>
-              </div>
-            ))}
+                  {label.name}
+
+                  <button
+                    type="button"
+                    disabled={deletingLabelId !== null}
+                    onClick={() => handleDeleteLabel(label.id)}
+                    style={{ backgroundColor: label.color }}
+                    className="flex h-3 w-3 shrink-0 cursor-pointer items-center justify-center rounded-full text-white transition duration-300 hover:bg-gray-200 disabled:cursor-not-allowed"
+                  >
+                    {isDeleting ? (
+                      <LoaderCircle size={10} className="animate-spin" />
+                    ) : (
+                      <X size={10} />
+                    )}
+                  </button>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

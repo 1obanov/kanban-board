@@ -1,8 +1,9 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 
-import { getBoard } from "../../api/boardApi";
+import { getColumns } from "../../api/columnsApi";
 import { getLabels } from "../../api/labelsApi";
 import { getPriorities } from "../../api/prioritiesApi";
+import { getTasks } from "../../api/tasksApi";
 import { getUsers } from "../../api/userApi";
 import type { AppThunk } from "../../store";
 import type { BoardColumn, Task } from "../../types/board";
@@ -10,7 +11,7 @@ import type { Label } from "../../types/label";
 import type { Priority } from "../../types/priority";
 import type { User } from "../../types/user";
 import { setAssignees, setLabels } from "../filters/filtersSlice";
-import { updateTask } from "../task/taskSlice";
+import { updateTaskThunk } from "../task/tasksThunks";
 import { deleteLabel, deleteUser } from "./boardSlice";
 
 type BoardData = {
@@ -24,16 +25,17 @@ type BoardData = {
 export const fetchBoardData = createAsyncThunk<BoardData>(
   "board/fetchBoardData",
   async () => {
-    const [board, users, labels, priorities] = await Promise.all([
-      getBoard(),
+    const [columns, tasks, users, labels, priorities] = await Promise.all([
+      getColumns(),
+      getTasks(),
       getUsers(),
       getLabels(),
       getPriorities(),
     ]);
 
     return {
-      columns: board.columns,
-      tasks: board.tasks,
+      columns,
+      tasks,
       users,
       labels,
       priorities,
@@ -48,31 +50,37 @@ export const fetchBoardData = createAsyncThunk<BoardData>(
  * - Updates filters state
  */
 export const removeAssignee =
-  (userId: User["id"]): AppThunk =>
-  (dispatch, getState) => {
-    // Remove user from board slice
+  (userId: User["id"]): AppThunk<Promise<void>> =>
+  async (dispatch, getState) => {
+    const { tasks } = getState().tasks;
+    const { assignees } = getState().filters;
+
+    // Find tasks assigned to this user
+    const affectedTasks = tasks.filter((task) =>
+      task.assigneeIds.includes(userId),
+    );
+
+    // Update affected tasks one by one
+    for (const task of affectedTasks) {
+      const { id, ...updatedFields } = task;
+
+      await dispatch(
+        updateTaskThunk({
+          id,
+          updatedFields: {
+            ...updatedFields,
+            assigneeIds: task.assigneeIds.filter(
+              (assigneeId) => assigneeId !== userId,
+            ),
+          },
+        }),
+      ).unwrap();
+    }
+
+    // Remove user from Redux only after all API requests succeed
     dispatch(deleteUser(userId));
 
-    const state = getState();
-
-    const { tasks } = state.tasks;
-    const { assignees } = state.filters;
-
-    // Remove the assignee from every task that has it
-    tasks.forEach((task) => {
-      if (task.assigneeIds.some((id) => id === userId)) {
-        dispatch(
-          updateTask({
-            id: task.id,
-            updatedFields: {
-              assigneeIds: task.assigneeIds.filter((id) => id !== userId),
-            },
-          }),
-        );
-      }
-    });
-
-    // Update filters slice
+    // Update filters
     dispatch(setAssignees(assignees.filter((a) => a.value !== userId)));
   };
 
@@ -83,29 +91,33 @@ export const removeAssignee =
  * - Updates filters state
  */
 export const removeLabel =
-  (labelId: Label["id"]): AppThunk =>
-  (dispatch, getState) => {
+  (labelId: Label["id"]): AppThunk<Promise<void>> =>
+  async (dispatch, getState) => {
+    const { tasks } = getState().tasks;
+    const { labels } = getState().filters;
+
+    // Find tasks assigned to this user
+    const affectedTasks = tasks.filter((task) =>
+      task.labelIds.includes(labelId),
+    );
+
+    // Update affected tasks one by one
+    for (const task of affectedTasks) {
+      const { id, ...updatedFields } = task;
+
+      await dispatch(
+        updateTaskThunk({
+          id,
+          updatedFields: {
+            ...updatedFields,
+            labelIds: task.labelIds.filter((a) => a !== labelId),
+          },
+        }),
+      ).unwrap();
+    }
+
     // Remove label from board slice
     dispatch(deleteLabel(labelId));
-
-    const state = getState();
-
-    const { tasks } = state.tasks;
-    const { labels } = state.filters;
-
-    // Remove the label from every task that has it
-    tasks.forEach((task) => {
-      if (task.labelIds.some((a) => a === labelId)) {
-        dispatch(
-          updateTask({
-            id: task.id,
-            updatedFields: {
-              labelIds: task.labelIds.filter((a) => a !== labelId),
-            },
-          }),
-        );
-      }
-    });
 
     // Update filters slice
     dispatch(setLabels(labels.filter((a) => a.value !== labelId)));

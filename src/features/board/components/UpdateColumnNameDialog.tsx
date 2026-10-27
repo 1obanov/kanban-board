@@ -1,12 +1,12 @@
 import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
 import { X } from "lucide-react";
 import { type FormEvent, useEffect, useState } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
 import Button from "../../../components/Button";
-import type { AppDispatch } from "../../../store";
+import type { AppDispatch, RootState } from "../../../store";
 import type { BoardColumn } from "../../../types/board";
-import { changeColumnName } from "../boardSlice";
+import { changeColumnNameThunk } from "../../columns/columnsThunks";
 
 type UpdateColumnNameDialogProps = {
   columnId: BoardColumn["id"];
@@ -28,11 +28,19 @@ export default function UpdateColumnNameDialog({
 }: UpdateColumnNameDialogProps) {
   const dispatch = useDispatch<AppDispatch>();
 
+  const { changeColumnNameStatus, changeColumnNameError } = useSelector(
+    (state: RootState) => state.columns,
+  );
+
+  const isSubmitting = changeColumnNameStatus === "loading";
+
   const [title, setTitle] = useState<BoardColumn["title"]>(columnTitle);
   const [titleError, setTitleError] = useState("");
 
   // Submit updated column title
-  const handleUpdateColumn = (e: FormEvent<HTMLFormElement>) => {
+  const handleUpdateColumnName = async (
+    e: FormEvent<HTMLFormElement>,
+  ): Promise<void> => {
     e.preventDefault();
 
     if (!title.trim()) {
@@ -42,9 +50,13 @@ export default function UpdateColumnNameDialog({
 
     setTitleError("");
 
-    dispatch(changeColumnName({ id: columnId, title }));
+    try {
+      await dispatch(changeColumnNameThunk({ id: columnId, title })).unwrap();
 
-    onClose();
+      onClose();
+    } catch (error) {
+      console.error("Failed to change the column name:", error);
+    }
   };
 
   useEffect(() => {
@@ -79,7 +91,7 @@ export default function UpdateColumnNameDialog({
               <X size={14} />
             </button>
           </div>
-          <form onSubmit={handleUpdateColumn} className="space-y-3 px-5">
+          <form onSubmit={handleUpdateColumnName} className="space-y-3 px-5">
             <div>
               <label
                 htmlFor="title"
@@ -119,11 +131,27 @@ export default function UpdateColumnNameDialog({
                 bgColor={"bg-white"}
                 textColor={"text-black"}
                 hoverBgColor={"hover:bg-gray-100"}
+                minWidth="min-w-[50%] md:min-w-30"
               >
                 Cancel
               </Button>
-              <Button type="submit">Save changes</Button>
+              <Button
+                type="submit"
+                minWidth="min-w-[50%] md:min-w-30"
+                disabledHoverBgColor="disabled:hover:bg-slate-900"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Saving..." : "Save changes"}
+              </Button>
             </div>
+            {changeColumnNameError && (
+              <p
+                className="rounded-lg border border-red-100 bg-red-50 px-2 py-2 text-center text-sm text-red-700"
+                role="alert"
+              >
+                {changeColumnNameError}
+              </p>
+            )}
           </form>
         </DialogPanel>
       </div>

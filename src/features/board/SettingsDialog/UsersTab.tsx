@@ -1,4 +1,4 @@
-import { Trash2, Users } from "lucide-react";
+import { LoaderCircle, Trash2, Users } from "lucide-react";
 import { type FormEvent, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
@@ -24,6 +24,8 @@ export default function UsersTab() {
 
   const [email, setEmail] = useState("");
   const [emailError, setEmailError] = useState("");
+
+  const [deletingUserId, setDeletingUserId] = useState<User["id"] | null>(null);
 
   const isValidEmail = (value: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -85,8 +87,16 @@ export default function UsersTab() {
   };
 
   /** Handle deleting a user */
-  const handleDeleteUser = (userId: User["id"]) => {
-    dispatch(removeAssignee(userId));
+  const handleDeleteUser = async (userId: User["id"]): Promise<void> => {
+    try {
+      setDeletingUserId(userId);
+
+      await dispatch(removeAssignee(userId));
+    } catch (error) {
+      console.error("Failed to delete user:", error);
+    } finally {
+      setDeletingUserId(null);
+    }
   };
 
   return (
@@ -160,9 +170,9 @@ export default function UsersTab() {
         <div>
           <Button
             type="submit"
-            className={`flex items-center gap-2 px-2 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50`}
+            className={`flex items-center gap-2 text-sm`}
             padding={"px-2 py-2"}
-            disabled={!name.trim() || !email.trim()}
+            disabledHoverBgColor="disabled:hover:bg-slate-900"
           >
             <Users size={14} />
             Add user
@@ -179,31 +189,48 @@ export default function UsersTab() {
           </p>
         ) : (
           <div className="flex flex-col gap-1.5">
-            {users.map((user) => (
-              <div
-                key={user.id}
-                className="flex items-center justify-between gap-2 rounded border-1 border-slate-200 p-2"
-              >
-                <div className="flex gap-2">
-                  <span className="avatar flex h-7 w-7 items-center justify-center overflow-hidden rounded-[50%]">
-                    <img src={user.avatar} alt={user.name}></img>
-                  </span>
-                  <div className="flex flex-col items-start">
-                    <span className="text-xs">{user.name}</span>
-                    <span className="text-[10px] text-gray-500">
-                      {user.email}
-                    </span>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  className="flex h-5 w-5 cursor-pointer items-center justify-center rounded-md transition-colors duration-300 hover:bg-gray-100 hover:text-red-500"
-                  onClick={() => handleDeleteUser(user.id)}
+            {users.map((user) => {
+              const isDeleting = deletingUserId === user.id;
+
+              return (
+                <div
+                  key={user.id}
+                  className={`flex items-center justify-between gap-2 rounded border border-slate-200 p-2 transition-all duration-200 ${
+                    isDeleting ? "pointer-events-none opacity-50" : ""
+                  }`}
                 >
-                  <Trash2 size={14} />
-                </button>
-              </div>
-            ))}
+                  <div className="flex min-w-0 gap-2">
+                    <span className="avatar flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full">
+                      <img
+                        src={user.avatar}
+                        alt={user.name}
+                        className="h-full w-full object-cover"
+                      />
+                    </span>
+
+                    <div className="flex min-w-0 flex-col items-start">
+                      <span className="truncate text-xs">{user.name}</span>
+                      <span className="truncate text-[10px] text-gray-500">
+                        {user.email}
+                      </span>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    disabled={deletingUserId !== null}
+                    className="flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center rounded-md transition-colors duration-300 hover:bg-red-50 hover:text-red-500 disabled:cursor-not-allowed"
+                    onClick={() => handleDeleteUser(user.id)}
+                  >
+                    {isDeleting ? (
+                      <LoaderCircle size={14} className="animate-spin" />
+                    ) : (
+                      <Trash2 size={14} />
+                    )}
+                  </button>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

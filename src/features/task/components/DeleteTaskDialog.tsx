@@ -1,7 +1,9 @@
 import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
 import { TriangleAlert, X } from "lucide-react";
+import { useSelector } from "react-redux";
 
 import Button from "../../../components/Button";
+import type { RootState } from "../../../store";
 import type { Task } from "../../../types/board";
 
 type DeleteTaskDialogProps = {
@@ -20,6 +22,17 @@ export default function DeleteTaskDialog({
   isDeleteOpen,
   onClose,
 }: DeleteTaskDialogProps) {
+  const { deleteStatus, deleteError } = useSelector(
+    (state: RootState) => state.tasks,
+  );
+
+  const { deleteTaskFromColumnStatus, deleteTaskFromColumnError } = useSelector(
+    (state: RootState) => state.columns,
+  );
+
+  const isSubmitting =
+    deleteStatus === "loading" || deleteTaskFromColumnStatus === "loading";
+
   return (
     <Dialog
       open={isDeleteOpen}
@@ -60,6 +73,7 @@ export default function DeleteTaskDialog({
                 bgColor={"bg-white"}
                 textColor={"text-black"}
                 hoverBgColor={"hover:bg-gray-100"}
+                minWidth="min-w-[50%] md:min-w-30"
               >
                 Cancel
               </Button>
@@ -70,10 +84,30 @@ export default function DeleteTaskDialog({
                 bgColor={"bg-red-500"}
                 textColor={"text-white"}
                 hoverBgColor={"hover:bg-red-400"}
+                minWidth="min-w-[50%] md:min-w-30"
+                disabledHoverBgColor="disabled:hover:bg-red-500"
+                disabled={isSubmitting}
               >
-                Delete
+                {isSubmitting ? "Deleting..." : "Delete"}
               </Button>
             </div>
+            {deleteError && (
+              <p
+                className="rounded-lg border border-red-100 bg-red-50 px-2 py-2 text-center text-sm text-red-700"
+                role="alert"
+              >
+                {deleteError}
+              </p>
+            )}
+
+            {deleteTaskFromColumnError && (
+              <p
+                className="rounded-lg border border-red-100 bg-red-50 px-2 py-2 text-center text-sm text-red-700"
+                role="alert"
+              >
+                {deleteTaskFromColumnError}
+              </p>
+            )}
           </div>
         </DialogPanel>
       </div>
