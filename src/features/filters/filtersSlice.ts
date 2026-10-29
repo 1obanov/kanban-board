@@ -11,7 +11,7 @@ type FiltersState = {
   priorities: PriorityID[];
 };
 
-/** Initial state for task filters */
+/** Initial state for filters slice */
 const initialState: FiltersState = {
   search: "",
   assignees: [],

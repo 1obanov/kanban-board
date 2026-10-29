@@ -3,6 +3,8 @@ import { createSlice } from "@reduxjs/toolkit";
 import type { Task } from "../../types/board";
 import type { RequestError, RequestStatus } from "../../types/common";
 import { fetchBoardData } from "../board/boardThunks";
+import { changeColumnNameThunk } from "../columns/columnsThunks";
+import { updateTasksLocally } from "./tasksActions";
 import {
   createTaskThunk,
   deleteTaskThunk,
@@ -19,7 +21,7 @@ type TaskState = {
   deleteError: RequestError;
 };
 
-/** Initial state for tasks */
+/** Initial state for tasks slice */
 const initialState: TaskState = {
   tasks: [],
   createStatus: "idle",
@@ -80,14 +82,33 @@ const taskSlice = createSlice({
         state.deleteError = null;
       })
       .addCase(deleteTaskThunk.fulfilled, (state, action) => {
-        const taskId = action.payload;
-        state.tasks = state.tasks.filter((task) => task.id !== taskId);
+        state.tasks = state.tasks.filter((task) => task.id !== action.payload);
         state.deleteStatus = "succeeded";
         state.deleteError = null;
       })
       .addCase(deleteTaskThunk.rejected, (state, action) => {
         state.deleteStatus = "failed";
         state.deleteError = action.error.message ?? "Failed to delete task";
+      })
+      .addCase(updateTasksLocally, (state, action) => {
+        action.payload.forEach((updatedTask) => {
+          const index = state.tasks.findIndex(
+            (task) => task.id === updatedTask.id,
+          );
+
+          if (index !== -1) {
+            state.tasks[index] = updatedTask;
+          }
+        });
+      })
+      .addCase(changeColumnNameThunk.fulfilled, (state, action) => {
+        const { oldId, column } = action.payload;
+
+        state.tasks.forEach((task) => {
+          if (task.status === oldId) {
+            task.status = column.id;
+          }
+        });
       });
   },
 });

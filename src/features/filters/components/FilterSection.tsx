@@ -21,11 +21,7 @@ type FilterSectionProps<Option extends FilterOption, Item> = {
   emptyMessage: React.ReactNode;
 };
 
-/**
- * FilterSection component
- * Renders a list of filter options with selectable checkboxes and a "Clear All" button.
- * Used in the FiltersDialog for Assignees, Labels, and Priorities.
- */
+/**  FilterSection component */
 export default function FilterSection<Option extends FilterOption, Item>({
   title,
   icon: Icon,

@@ -1,61 +1,75 @@
+import { supabase } from "../lib/supabaseClient";
 import type { Task } from "../types/board";
 
-const API_URL = import.meta.env.VITE_API_URL;
-
 export const getTasks = async (): Promise<Task[]> => {
-  const response = await fetch(`${API_URL}/tasks`);
+  const { data, error } = await supabase
+    .from("tasks")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .order("position", { ascending: true });
 
-  if (!response.ok) {
-    throw new Error("Failed to fetch tasks");
+  if (error) {
+    throw new Error(`Failed to fetch tasks: ${error.message}`);
   }
 
-  return response.json();
+  return data ?? [];
 };
 
-export const createTask = async (task: Omit<Task, "id">): Promise<Task> => {
-  const response = await fetch(`${API_URL}/tasks`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(task),
-  });
+export const createTask = async (
+  task: Omit<Task, "id" | "created_at">,
+): Promise<Task> => {
+  const { data, error } = await supabase
+    .from("tasks")
+    .insert(task)
+    .select()
+    .single();
 
-  if (!response.ok) {
-    throw new Error("Failed to create task");
+  if (error) {
+    throw new Error(`Failed to create task: ${error.message}`);
   }
 
-  return response.json();
+  return data as Task;
 };
 
 export const updateTask = async (
   taskId: Task["id"],
-  updatedFields: Partial<Omit<Task, "id">>,
+  updatedFields: Partial<
+    Omit<Task, "id" | "status" | "created_at" | "position">
+  >,
 ): Promise<Task> => {
-  const response = await fetch(`${API_URL}/tasks/${taskId}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      id: taskId,
-      ...updatedFields,
-    }),
-  });
+  const { data, error } = await supabase
+    .from("tasks")
+    .update(updatedFields)
+    .eq("id", taskId)
+    .select()
+    .single();
 
-  if (!response.ok) {
-    throw new Error("Failed to update task");
+  if (error) {
+    throw new Error(`Failed to update task: ${error.message}`);
   }
 
-  return response.json();
+  return data as Task;
 };
 
 export const deleteTask = async (taskId: Task["id"]): Promise<void> => {
-  const response = await fetch(`${API_URL}/tasks/${taskId}`, {
-    method: "DELETE",
-  });
+  const { error } = await supabase.from("tasks").delete().eq("id", taskId);
 
-  if (!response.ok) {
-    throw new Error("Failed to delete task");
+  if (error) {
+    throw new Error(`Failed to delete task: ${error.message}`);
+  }
+};
+
+export const moveTaskInColumn = async (
+  taskId: string,
+  status: string,
+  position: number,
+): Promise<void> => {
+  const { error } = await supabase
+    .from("tasks")
+    .update({ status, position })
+    .eq("id", taskId);
+
+  if (error) {
+    throw new Error(`Failed to move task: ${error.message}`);
   }
 };

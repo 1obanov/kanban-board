@@ -15,9 +15,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   disabledHoverBgColor?: string;
 }
 
-/**
- * Reusable Button component
- */
+/** Reusable Button component */
 export default function Button({
   children,
   onClick,

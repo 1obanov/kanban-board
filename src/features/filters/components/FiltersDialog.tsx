@@ -27,19 +27,17 @@ type FiltersDialogProps = {
   onClose: () => void;
 };
 
-/** Dialog component to manage task filters */
+/**  FiltersDialog component */
 export default function FiltersDialog({
   isFiltersOpen,
   onClose,
 }: FiltersDialogProps) {
   const dispatch = useDispatch<AppDispatch>();
 
-  /** Get board data for filter options */
   const { users, availableLabels, availablePriorities } = useSelector(
     (state: RootState) => state.board,
   );
 
-  /** Get currently selected filters */
   const { assignees, labels, priorities } = useSelector(
     (state: RootState) => state.filters,
   );
@@ -48,14 +46,12 @@ export default function FiltersDialog({
   const labelsOption = useSelector(selectLabelsOptions);
   const prioritiesOption = useSelector(selectPrioritiesOptions);
 
-  /** Local state for selected filters */
   const [selectedAssignees, setSelectedAssignees] =
     useState<UserOption[]>(assignees);
   const [selectedLabels, setSelectedLabels] = useState<LabelOption[]>(labels);
   const [selectedPriorities, setSelectedPriorities] =
     useState<PriorityID[]>(priorities);
 
-  /** Toggle an option in a selected options array */
   const toggleOption =
     <T extends { value: string }>(updateState: Dispatch<SetStateAction<T[]>>) =>
     (option: T) => {
@@ -68,7 +64,6 @@ export default function FiltersDialog({
       });
     };
 
-  /** Toggle a priority ID */
   const togglePriority = (option: PriorityOption) => {
     setSelectedPriorities((prev) =>
       prev.includes(option.value)
@@ -77,13 +72,11 @@ export default function FiltersDialog({
     );
   };
 
-  /** Clear all selected options */
   const clearOptions =
     <T,>(updateState: Dispatch<SetStateAction<T[]>>) =>
     () =>
       updateState([]);
 
-  /** Update local state when global filters change */
   useEffect(() => {
     if (isFiltersOpen) {
       setSelectedAssignees(assignees);
@@ -92,7 +85,7 @@ export default function FiltersDialog({
     }
   }, [isFiltersOpen, assignees, labels, priorities]);
 
-  /** Save changes and update global state */
+  /** Handle saving filters */
   const handleSaveChanges = (e: FormEvent<HTMLFormElement>): void => {
     e.preventDefault();
     dispatch(setAssignees(selectedAssignees));

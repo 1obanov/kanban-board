@@ -6,21 +6,17 @@ import { useDispatch, useSelector } from "react-redux";
 import Button from "../../../components/Button";
 import type { AppDispatch, RootState } from "../../../store";
 import type { Label } from "../../../types/label";
-import { addLabel } from "../boardSlice";
-import { removeLabel } from "../boardThunks";
+import { addLabelThunk, removeLabel } from "../boardThunks";
 
-/**
- * Tab for managing labels in board settings
- * - Add new labels with color
- * - Delete existing labels
- * - Supports color picker
- */
+/**  LabelsTab component */
 export default function LabelsTab() {
   const dispatch = useDispatch<AppDispatch>();
 
-  const availableLabels = useSelector(
-    (state: RootState) => state.board.availableLabels,
+  const { availableLabels, createLabelStatus, createLabelError } = useSelector(
+    (state: RootState) => state.board,
   );
+
+  const isSubmitting = createLabelStatus === "loading";
 
   const [labelName, setLabelName] = useState("");
   const [labelNameError, setLabelNameError] = useState("");
@@ -31,45 +27,42 @@ export default function LabelsTab() {
     null,
   );
 
-  /** Add new label */
-  const handleAddLabel = (e: FormEvent<HTMLFormElement>) => {
+  /** Handle adding new label */
+  const handleAddLabel = async (
+    e: FormEvent<HTMLFormElement>,
+  ): Promise<void> => {
     e.preventDefault();
 
-    const labelId = labelName
-      .trim()
-      .toLowerCase()
-      .replace(/\s+/g, "-")
-      .replace(/[^a-z0-9-]/g, "");
+    // Normalize label name and check if it already exists
+    const normalizedName = labelName.trim().toLowerCase();
 
-    if (!labelId) {
-      setLabelNameError("Please enter a valid label name");
-      return;
-    }
+    const labelExists = availableLabels.some(
+      (label) => label.name.trim().toLowerCase() === normalizedName,
+    );
 
-    // Check if label already exists
-    const labelExists = availableLabels.some((label) => label.id === labelId);
     if (labelExists) {
       setLabelNameError("Label already exists");
       return;
     }
 
-    // Create new label
-    const newLabel: Label = {
-      id: labelId,
+    const newLabel: Omit<Label, "id"> = {
       name: labelName.trim(),
       color,
     };
 
-    dispatch(addLabel(newLabel));
+    try {
+      await dispatch(addLabelThunk(newLabel)).unwrap();
 
-    // Reset form
-    setLabelName("");
-    setLabelNameError("");
-    setColor("#ff0000");
-    setDisplayColorPicker(false);
+      setLabelName("");
+      setLabelNameError("");
+      setColor("#ff0000");
+      setDisplayColorPicker(false);
+    } catch (error) {
+      console.error("Failed to add label:", error);
+    }
   };
 
-  /** Delete a label */
+  /** Handle deleting a label */
   const handleDeleteLabel = async (labelId: Label["id"]): Promise<void> => {
     try {
       setDeletingLabelId(labelId);
@@ -82,7 +75,6 @@ export default function LabelsTab() {
     }
   };
 
-  // Close color picker when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -165,14 +157,33 @@ export default function LabelsTab() {
         <div>
           <Button
             type="submit"
-            className={`flex items-center gap-2 text-sm`}
+            className={`flex items-center justify-center gap-2 text-sm md:justify-start`}
+            minWidth="min-w-[100%] md:min-w-24"
             padding={"px-2 py-2"}
             disabledHoverBgColor="disabled:hover:bg-slate-900"
+            disabled={isSubmitting}
           >
-            <Tag size={14} />
-            Add label
+            {isSubmitting ? (
+              <>
+                <LoaderCircle size={10} className="animate-spin" />
+                Creating...
+              </>
+            ) : (
+              <>
+                <Tag size={14} />
+                Add label
+              </>
+            )}
           </Button>
         </div>
+        {createLabelError && (
+          <p
+            className="rounded-lg border border-red-100 bg-red-50 px-2 py-2 text-center text-sm text-red-700"
+            role="alert"
+          >
+            {createLabelError}
+          </p>
+        )}
       </form>
       <div>
         <span className="mb-1 block text-xs font-medium text-gray-700">

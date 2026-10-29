@@ -12,7 +12,6 @@ import type { AppDispatch, RootState } from "../../../store";
 import type { Task } from "../../../types/board";
 import type { PriorityOption } from "../../../types/priority";
 import type { User } from "../../../types/user";
-import { addTaskToColumnThunk } from "../../columns/columnsThunks";
 import { selectPrioritiesOptions } from "../../filters/filterSelectors";
 import { createTaskThunk } from "../tasksThunks";
 
@@ -21,11 +20,7 @@ type AddTaskDialogProps = {
   onClose: () => void;
 };
 
-/**
- * AddTaskDialog component
- *
- * Modal dialog for creating a new task and assigning it to a board column.
- */
+/** AddTaskDialog component */
 export default function AddTaskDialog({
   isNewTaskOpen,
   onClose,
@@ -36,16 +31,13 @@ export default function AddTaskDialog({
     (state: RootState) => state.board,
   );
 
-  const { addTaskToColumnStatus, addTaskToColumnError } = useSelector(
-    (state: RootState) => state.columns,
-  );
-
   const { createStatus, createError } = useSelector(
     (state: RootState) => state.tasks,
   );
 
-  const isSubmitting =
-    createStatus === "loading" || addTaskToColumnStatus === "loading";
+  const columns = useSelector((state: RootState) => state.columns.columns);
+
+  const isSubmitting = createStatus === "loading";
 
   const prioritiesOption = useSelector(selectPrioritiesOptions);
 
@@ -59,18 +51,12 @@ export default function AddTaskDialog({
   const [selectedLabels, setSelectedLabels] = useState<string[]>([]);
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
 
-  /**
-   * Toggle label selection by id
-   */
   const toggleLabel = (id: string): void => {
     setSelectedLabels((prev) =>
       prev.includes(id) ? prev.filter((el) => el !== id) : [...prev, id],
     );
   };
 
-  /**
-   * Toggle assignee selection
-   */
   const toggleAssignee = (assignee: User): void => {
     setSelectedAssignees((prev) => {
       const exists = prev.includes(assignee.id);
@@ -81,9 +67,7 @@ export default function AddTaskDialog({
     });
   };
 
-  /**
-   * Validate form and create a new task
-   */
+  /** Handle adding task */
   const handleAddTask = async (
     e: FormEvent<HTMLFormElement>,
   ): Promise<void> => {
@@ -96,24 +80,35 @@ export default function AddTaskDialog({
 
     setTitleError("");
 
-    const newTask: Omit<Task, "id"> = {
+    if (columns.length === 0) {
+      console.error("No columns available");
+      return;
+    }
+
+    const positions = columns.map((column) => column.position);
+    const minPosition = Math.min(...positions);
+
+    const firstColumnId = columns.find(
+      (column) => column.position === minPosition,
+    )?.id;
+
+    if (!firstColumnId) {
+      console.error("First column ID not found");
+      return;
+    }
+
+    const newTask: Omit<Task, "id" | "created_at" | "position"> = {
       title: title.trim(),
       description,
-      assigneeIds: selectedAssignees,
-      labelIds: selectedLabels,
-      priorityId: selectedPriority.value,
-      dueDate: dueDate.toISOString(),
+      status: firstColumnId,
+      assignee_ids: selectedAssignees,
+      label_ids: selectedLabels,
+      priority_id: selectedPriority.value,
+      due_date: dueDate.toISOString().split("T")[0],
     };
 
     try {
-      const createdTask = await dispatch(createTaskThunk(newTask)).unwrap();
-
-      await dispatch(
-        addTaskToColumnThunk({
-          taskId: createdTask.id,
-          columnId: "todo",
-        }),
-      ).unwrap();
+      await dispatch(createTaskThunk(newTask)).unwrap();
 
       setTitle("");
       setDescription("");
@@ -123,7 +118,7 @@ export default function AddTaskDialog({
       setSelectedAssignees([]);
       onClose();
     } catch (error) {
-      console.error("Failed to save task:", error);
+      console.error("Failed to create task:", error);
     }
   };
 
@@ -353,15 +348,6 @@ export default function AddTaskDialog({
                 role="alert"
               >
                 {createError}
-              </p>
-            )}
-
-            {addTaskToColumnError && (
-              <p
-                className="rounded-lg border border-red-100 bg-red-50 px-2 py-2 text-center text-sm text-red-700"
-                role="alert"
-              >
-                {addTaskToColumnError}
               </p>
             )}
           </form>

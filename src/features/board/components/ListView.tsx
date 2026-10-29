@@ -1,18 +1,16 @@
 import { EllipsisVertical } from "lucide-react";
 import { type ReactNode } from "react";
 
-import type { BoardColumn } from "../../../types/board";
+import type { Column } from "../../../types/board";
 
 type ListViewProps = {
-  title: BoardColumn["title"];
+  title: Column["title"];
   countTasks: number;
   onEdit: () => void;
   children: ReactNode;
 };
 
-/**
- * ListView component for Kanban board
- */
+/**  ListView component */
 export default function ListView({
   title,
   countTasks,

@@ -132,9 +132,7 @@ interface CustomSelectProps extends Omit<
   icon?: ReactNode;
 }
 
-/**
- * Reusable Custom Select component
- */
+/** Reusable Custom Select component */
 const CustomSelect = ({
   value,
   onChange,

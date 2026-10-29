@@ -21,9 +21,9 @@ export const selectFilteredTasks = createSelector(
       // Filter by assignees
       if (
         filters.assignees.length > 0 &&
-        !task.assigneeIds.some((assigneeId) =>
+        !task.assignee_ids.some((id) =>
           filters.assignees.some(
-            (filteredAssignee) => filteredAssignee.value === assigneeId,
+            (filteredAssignee) => filteredAssignee.value === id,
           ),
         )
       ) {
@@ -33,10 +33,8 @@ export const selectFilteredTasks = createSelector(
       // Filter by labels
       if (
         filters.labels.length > 0 &&
-        !task.labelIds.some((labelId) =>
-          filters.labels.some(
-            (filteredLabel) => filteredLabel.value === labelId,
-          ),
+        !task.label_ids.some((id) =>
+          filters.labels.some((filteredLabel) => filteredLabel.value === id),
         )
       ) {
         return false;
@@ -45,7 +43,7 @@ export const selectFilteredTasks = createSelector(
       // Filter by priority
       if (
         filters.priorities.length > 0 &&
-        !filters.priorities.includes(task.priorityId)
+        !filters.priorities.includes(task.priority_id)
       ) {
         return false;
       }

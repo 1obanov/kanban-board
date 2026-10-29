@@ -13,9 +13,7 @@ type DeleteTaskDialogProps = {
   onClose: () => void;
 };
 
-/**
- * DeleteTaskDialog component
- */
+/** DeleteTaskDialog component */
 export default function DeleteTaskDialog({
   taskTitle,
   handleDeleteTask,
@@ -26,12 +24,7 @@ export default function DeleteTaskDialog({
     (state: RootState) => state.tasks,
   );
 
-  const { deleteTaskFromColumnStatus, deleteTaskFromColumnError } = useSelector(
-    (state: RootState) => state.columns,
-  );
-
-  const isSubmitting =
-    deleteStatus === "loading" || deleteTaskFromColumnStatus === "loading";
+  const isSubmitting = deleteStatus === "loading";
 
   return (
     <Dialog
@@ -97,15 +90,6 @@ export default function DeleteTaskDialog({
                 role="alert"
               >
                 {deleteError}
-              </p>
-            )}
-
-            {deleteTaskFromColumnError && (
-              <p
-                className="rounded-lg border border-red-100 bg-red-50 px-2 py-2 text-center text-sm text-red-700"
-                role="alert"
-              >
-                {deleteTaskFromColumnError}
               </p>
             )}
           </div>

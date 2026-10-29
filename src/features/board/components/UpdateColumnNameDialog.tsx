@@ -5,21 +5,17 @@ import { useDispatch, useSelector } from "react-redux";
 
 import Button from "../../../components/Button";
 import type { AppDispatch, RootState } from "../../../store";
-import type { BoardColumn } from "../../../types/board";
+import type { Column } from "../../../types/board";
 import { changeColumnNameThunk } from "../../columns/columnsThunks";
 
 type UpdateColumnNameDialogProps = {
-  columnId: BoardColumn["id"];
-  columnTitle: BoardColumn["title"];
+  columnId: Column["id"];
+  columnTitle: Column["title"];
   isEditOpen: boolean;
   onClose: () => void;
 };
 
-/**
- * UpdateColumnNameDialog component
- *
- * Modal dialog responsible for editing column tile and dispatching the updates
- */
+/**  UpdateColumnNameDialog component */
 export default function UpdateColumnNameDialog({
   columnId,
   columnTitle,
@@ -34,10 +30,10 @@ export default function UpdateColumnNameDialog({
 
   const isSubmitting = changeColumnNameStatus === "loading";
 
-  const [title, setTitle] = useState<BoardColumn["title"]>(columnTitle);
+  const [title, setTitle] = useState<Column["title"]>(columnTitle);
   const [titleError, setTitleError] = useState("");
 
-  // Submit updated column title
+  /** Handle updating column name */
   const handleUpdateColumnName = async (
     e: FormEvent<HTMLFormElement>,
   ): Promise<void> => {
@@ -50,12 +46,20 @@ export default function UpdateColumnNameDialog({
 
     setTitleError("");
 
+    const newColumnId = title
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-zа-яё\s]/gi, "")
+      .replace(/\s+/g, "-");
+
     try {
-      await dispatch(changeColumnNameThunk({ id: columnId, title })).unwrap();
+      await dispatch(
+        changeColumnNameThunk({ id: columnId, newColumnId, title }),
+      ).unwrap();
 
       onClose();
     } catch (error) {
-      console.error("Failed to change the column name:", error);
+      console.error("Failed to update column name:", error);
     }
   };
 

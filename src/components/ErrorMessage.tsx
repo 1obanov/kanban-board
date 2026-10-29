@@ -7,6 +7,7 @@ type ErrorMessageProps = {
   onRetry: () => void;
 };
 
+/**  ErrorMessage component */
 export default function ErrorMessage({ message, onRetry }: ErrorMessageProps) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4">

@@ -5,19 +5,17 @@ import { useDispatch, useSelector } from "react-redux";
 import Button from "../../../components/Button";
 import type { AppDispatch, RootState } from "../../../store";
 import type { User } from "../../../types/user";
-import { addUser } from "../boardSlice";
-import { removeAssignee } from "../boardThunks";
+import { addUserThunk, removeAssignee } from "../boardThunks";
 
-/**
- * Tab for managing assignees in board settings
- * - Add new team members
- * - Delete existing members
- * - Validates name and email fields
- */
+/**  UsersTab component */
 export default function UsersTab() {
   const dispatch = useDispatch<AppDispatch>();
 
-  const users = useSelector((state: RootState) => state.board.users);
+  const { users, createUserStatus, createUserError } = useSelector(
+    (state: RootState) => state.board,
+  );
+
+  const isSubmitting = createUserStatus === "loading";
 
   const [name, setName] = useState("");
   const [nameError, setNameError] = useState("");
@@ -33,7 +31,9 @@ export default function UsersTab() {
   };
 
   /** Handle adding new user */
-  const handleAddUser = (e: FormEvent<HTMLFormElement>) => {
+  const handleAddUser = async (
+    e: FormEvent<HTMLFormElement>,
+  ): Promise<void> => {
     e.preventDefault();
 
     // Validate name
@@ -67,9 +67,7 @@ export default function UsersTab() {
       return;
     }
 
-    // Create new user object
-    const newUser: User = {
-      id: crypto.randomUUID(),
+    const newUser: Omit<User, "id"> = {
       name,
       email,
       avatar: `https://i.pravatar.cc/150?img=${
@@ -77,13 +75,16 @@ export default function UsersTab() {
       }`,
     };
 
-    dispatch(addUser(newUser));
+    try {
+      await dispatch(addUserThunk(newUser)).unwrap();
 
-    // Clear form
-    setName("");
-    setEmail("");
-    setNameError("");
-    setEmailError("");
+      setName("");
+      setEmail("");
+      setNameError("");
+      setEmailError("");
+    } catch (error) {
+      console.error("Failed to add user:", error);
+    }
   };
 
   /** Handle deleting a user */
@@ -170,14 +171,33 @@ export default function UsersTab() {
         <div>
           <Button
             type="submit"
-            className={`flex items-center gap-2 text-sm`}
+            className={`flex items-center justify-center gap-2 text-sm md:justify-start`}
+            minWidth="min-w-[100%] md:min-w-24"
             padding={"px-2 py-2"}
             disabledHoverBgColor="disabled:hover:bg-slate-900"
+            disabled={isSubmitting}
           >
-            <Users size={14} />
-            Add user
+            {isSubmitting ? (
+              <>
+                <LoaderCircle size={10} className="animate-spin" />
+                Creating...
+              </>
+            ) : (
+              <>
+                <Users size={14} />
+                Add user
+              </>
+            )}
           </Button>
         </div>
+        {createUserError && (
+          <p
+            className="rounded-lg border border-red-100 bg-red-50 px-2 py-2 text-center text-sm text-red-700"
+            role="alert"
+          >
+            {createUserError}
+          </p>
+        )}
       </form>
       <div>
         <span className="mb-1 block text-xs font-medium text-gray-700">

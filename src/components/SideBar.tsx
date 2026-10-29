@@ -18,9 +18,7 @@ type SidebarNavItem = {
   icon: LucideIcon;
 };
 
-/**
- * Sidebar navigation component
- */
+/**  Sidebar navigation component */
 export default function SideBar() {
   const navItems: SidebarNavItem[] = [
     { id: "dashboard", label: "Dashboard", icon: Home },

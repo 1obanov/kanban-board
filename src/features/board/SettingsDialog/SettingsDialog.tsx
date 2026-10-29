@@ -23,11 +23,7 @@ function classNames(...classes: string[]): string {
   return classes.filter(Boolean).join(" ");
 }
 
-/**
- * Board Settings dialog component
- * - Manages board settings in tabs (Users / Labels)
- * - Uses Headless UI Dialog & Tabs
- */
+/**  SettingsDialog component */
 export default function SettingsDialog({
   isSettingOpen,
   onClose,

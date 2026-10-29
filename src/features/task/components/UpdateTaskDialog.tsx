@@ -21,11 +21,7 @@ type UpdateTaskDialogProps = {
   onClose: () => void;
 };
 
-/**
- * UpdateTaskDialog component
- *
- * Modal dialog responsible for editing task details and dispatching task updates
- */
+/** UpdateTaskDialog component */
 export default function UpdateTaskDialog({
   task,
   isEditOpen,
@@ -51,30 +47,27 @@ export default function UpdateTaskDialog({
     task.description,
   );
   const [dueDate, setDueDate] = useState<Date>(
-    task.dueDate ? new Date(task.dueDate) : new Date(),
+    task.due_date ? new Date(task.due_date) : new Date(),
   );
 
-  // Initial priority object based on task value
   const priority = prioritiesOption.find(
-    (option) => option.value === task.priorityId,
+    (option) => option.value === task.priority_id,
   );
 
   if (!priority) {
-    throw new Error(`Priority "${task.priorityId}" not found`);
+    throw new Error(`Priority "${task.priority_id}" not found`);
   }
 
   const [selectedPriority, setSelectedPriority] = useState(priority);
-  const [selectedLabels, setSelectedLabels] = useState(task.labelIds);
-  const [selectedAssignees, setSelectedAssignees] = useState(task.assigneeIds);
+  const [selectedLabels, setSelectedLabels] = useState(task.label_ids);
+  const [selectedAssignees, setSelectedAssignees] = useState(task.assignee_ids);
 
-  // Toggle label selection by id
   const toggleLabel = (id: string): void => {
     setSelectedLabels((prev) =>
       prev.includes(id) ? prev.filter((el) => el !== id) : [...prev, id],
     );
   };
 
-  // Toggle assignee selection by object
   const toggleAssignee = (assignee: User): void => {
     setSelectedAssignees((prev) => {
       const exists = prev.includes(assignee.id);
@@ -85,7 +78,7 @@ export default function UpdateTaskDialog({
     });
   };
 
-  // Submit updated task data
+  /** Handle submiting updated task */
   const handleUpdateTask = async (
     e: FormEvent<HTMLFormElement>,
   ): Promise<void> => {
@@ -98,17 +91,22 @@ export default function UpdateTaskDialog({
 
     setTitleError("");
 
-    const updatedFields: Omit<Task, "id"> = {
+    const updatedFields: Omit<
+      Task,
+      "id" | "status" | "created_at" | "position"
+    > = {
       title: title.trim(),
       description,
-      assigneeIds: selectedAssignees,
-      labelIds: selectedLabels,
-      priorityId: selectedPriority.value,
-      dueDate: dueDate.toISOString(),
+      assignee_ids: selectedAssignees,
+      label_ids: selectedLabels,
+      priority_id: selectedPriority.value,
+      due_date: dueDate.toISOString().split("T")[0],
     };
 
     try {
-      await dispatch(updateTaskThunk({ id: task.id, updatedFields })).unwrap();
+      await dispatch(
+        updateTaskThunk({ taskId: task.id, updatedFields }),
+      ).unwrap();
 
       onClose();
     } catch (error) {
@@ -122,18 +120,18 @@ export default function UpdateTaskDialog({
       setTitleError("");
       setDescription(task.description);
       setSelectedPriority(priority);
-      setSelectedLabels(task.labelIds);
-      setSelectedAssignees(task.assigneeIds);
-      setDueDate(task.dueDate ? new Date(task.dueDate) : new Date());
+      setSelectedLabels(task.label_ids);
+      setSelectedAssignees(task.assignee_ids);
+      setDueDate(task.due_date ? new Date(task.due_date) : new Date());
     }
   }, [
     isEditOpen,
     task.title,
     task.description,
     priority,
-    task.labelIds,
-    task.assigneeIds,
-    task.dueDate,
+    task.label_ids,
+    task.assignee_ids,
+    task.due_date,
   ]);
 
   return (

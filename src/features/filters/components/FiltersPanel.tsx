@@ -30,11 +30,7 @@ import {
 } from "../filtersSlice";
 import FiltersDialog from "./FiltersDialog";
 
-/**
- * FiltersPanel component
- * Renders search input, filters button, view mode toggle, and select dropdowns for mobile.
- * Works with Redux state to control board filters and view mode.
- */
+/**  FiltersPanel component */
 export default function FiltersPanel() {
   const dispatch = useDispatch<AppDispatch>();
 

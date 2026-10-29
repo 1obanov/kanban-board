@@ -9,11 +9,12 @@ import { formatDueDate } from "../../../utils/dateUtils";
 type ListTaskCardProps = {
   task: Task;
   priority: Priority;
-  isExpired: boolean;
+  isExpired: string | boolean;
   onEdit: () => void;
   onDelete: () => void;
 };
 
+/**  ListTaskCard component */
 export default function ListTaskCard({
   task,
   priority,
@@ -54,7 +55,7 @@ export default function ListTaskCard({
               ) : (
                 <CalendarOff size={12} className="text-red-400" />
               )}
-              {formatDueDate(task.dueDate)}
+              {formatDueDate(task.due_date)}
             </span>
           </div>
         </div>
@@ -77,7 +78,7 @@ export default function ListTaskCard({
           </div>
           <div className="flex items-start gap-2">
             <div className="card__labels flex flex-wrap items-center gap-1">
-              {task.labelIds.map((labelId) => {
+              {task.label_ids.map((labelId) => {
                 const labelOption = availableLabels.find(
                   (label) => label.id === labelId,
                 );
@@ -98,7 +99,7 @@ export default function ListTaskCard({
               })}
             </div>
             <div className="assignees ms-auto flex items-center -space-x-1">
-              {task.assigneeIds.map((assigneeId) => {
+              {task.assignee_ids.map((assigneeId) => {
                 const user = users.find((user) => user.id === assigneeId);
                 if (!user) return null;
 

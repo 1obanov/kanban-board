@@ -1,18 +1,16 @@
 import { EllipsisVertical } from "lucide-react";
 import { forwardRef, type ReactNode } from "react";
 
-import type { BoardColumn } from "../../../types/board";
+import type { Column } from "../../../types/board";
 
 type BoardViewProps = {
-  title: BoardColumn["title"];
+  title: Column["title"];
   countTasks: number;
   onEdit: () => void;
   children: ReactNode;
 };
 
-/**
- * BoardView component for Kanban board
- */
+/**  BoardView component */
 const BoardView = forwardRef<HTMLDivElement, BoardViewProps>(
   ({ title, countTasks, onEdit, children, ...props }, ref) => {
     return (

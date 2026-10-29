@@ -9,11 +9,12 @@ import { formatDueDate } from "../../../utils/dateUtils";
 type BoardTaskCardProps = {
   task: Task;
   priority: Priority;
-  isExpired: boolean;
+  isExpired: string | boolean;
   onEdit: () => void;
   onDelete: () => void;
 };
 
+/**  BoardTaskCard component */
 export default function BoardTaskCard({
   task,
   priority,
@@ -34,7 +35,7 @@ export default function BoardTaskCard({
               className="block h-2.5 w-2.5 rounded-[50%]"
               style={{ backgroundColor: priority.color }}
             />
-            <span className="text-xs capitalize">{task.priorityId}</span>
+            <span className="text-xs capitalize">{task.priority_id}</span>
           </div>
           <div className="absolute top-0 right-0 flex items-center gap-1 opacity-0 transition-opacity duration-300 group-hover:opacity-100 md:relative pointer-coarse:opacity-100">
             <button
@@ -59,7 +60,7 @@ export default function BoardTaskCard({
         {task.description}
       </div>
       <div className="card__labels mb-3 flex flex-wrap items-center gap-1">
-        {task.labelIds.map((labelId) => {
+        {task.label_ids.map((labelId) => {
           const labelOption = availableLabels.find(
             (label) => label.id === labelId,
           );
@@ -90,10 +91,10 @@ export default function BoardTaskCard({
           ) : (
             <CalendarOff size={12} className="text-red-400" />
           )}
-          {formatDueDate(task.dueDate)}
+          {formatDueDate(task.due_date)}
         </span>
         <div className="assignees ms-auto flex items-center -space-x-1">
-          {task.assigneeIds.map((assigneeId) => {
+          {task.assignee_ids.map((assigneeId) => {
             const user = users.find((user) => user.id === assigneeId);
             if (!user) return null;
 

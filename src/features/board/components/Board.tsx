@@ -8,20 +8,15 @@ import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import type { AppDispatch, RootState } from "../../../store";
-import type { BoardColumn } from "../../../types/board";
-import { moveTaskInColumn } from "../../columns/columnsSlice";
-import { moveTaskInColumnThunk } from "../../columns/columnsThunks";
+import type { Column } from "../../../types/board";
 import TaskCard from "../../task/components/TaskCard";
 import { selectFilteredTasks } from "../../task/taskSelectors";
+import { moveTaskInColumnThunk } from "../../task/tasksThunks";
 import BoardView from "./BoardView";
 import ListView from "./ListView";
 import UpdateColumnNameDialog from "./UpdateColumnNameDialog";
 
-/**
- * Kanban Board component
- * - Supports drag & drop between columns
- * - Renders in board or list view based on state
- */
+/**  Board component */
 export default function Board() {
   const dispatch = useDispatch<AppDispatch>();
 
@@ -30,10 +25,10 @@ export default function Board() {
 
   const tasks = useSelector(selectFilteredTasks);
 
-  const [editingColumn, setEditingColumn] = useState<BoardColumn | null>(null);
+  const [editingColumn, setEditingColumn] = useState<Column | null>(null);
 
-  /** Handle drag & drop end */
-  const handleDragEnd = (result: DropResult) => {
+  /** Handle moving task between columns or reordering within a column */
+  const handleDragEnd = async (result: DropResult): Promise<void> => {
     const { source, destination, draggableId } = result;
 
     if (!destination) return;
@@ -45,44 +40,45 @@ export default function Board() {
       return;
     }
 
-    const payload = {
-      taskId: draggableId,
-      sourceColumnId: source.droppableId,
-      destinationColumnId: destination.droppableId,
-      destinationIndex: destination.index,
-    };
-
-    // Optimistic update: immediately update Redux
-    dispatch(moveTaskInColumn(payload));
-
-    // Persist changes to MockAPI
-    dispatch(moveTaskInColumnThunk(payload));
+    try {
+      await dispatch(
+        moveTaskInColumnThunk({
+          taskId: draggableId,
+          sourceColumnId: source.droppableId,
+          destinationColumnId: destination.droppableId,
+          destinationIndex: destination.index,
+        }),
+      ).unwrap();
+    } catch (error) {
+      console.error("Failed to move task:", error);
+    }
   };
 
-  /** Utility: get task object by ID considering filters */
-  const getTaskById = (id: string) => tasks.find((t) => t.id === id);
+  const getColumnTasks = (columnId: string) =>
+    tasks
+      .filter((task) => task.status === columnId)
+      .sort((a, b) => a.position - b.position);
 
   return (
     <>
       <DragDropContext onDragEnd={handleDragEnd}>
         <div className="h-full overflow-hidden p-3">
           {viewMode === "board" ? (
-            // Board view
             <div className="grid h-full auto-cols-[minmax(280px,1fr)] grid-flow-col gap-2.5 overflow-x-auto">
-              {columns.map((column) => (
-                <Droppable key={column.id} droppableId={column.id}>
-                  {(provided) => (
-                    <BoardView
-                      title={column.title}
-                      countTasks={column.taskIds.length}
-                      onEdit={() => setEditingColumn(column)}
-                      ref={provided.innerRef}
-                      {...provided.droppableProps}
-                    >
-                      {column.taskIds.map((taskId, index) => {
-                        const task = getTaskById(taskId);
-                        if (!task) return null;
-                        return (
+              {columns.map((column) => {
+                const columnTasks = getColumnTasks(column.id);
+
+                return (
+                  <Droppable key={column.id} droppableId={column.id}>
+                    {(provided) => (
+                      <BoardView
+                        title={column.title}
+                        countTasks={columnTasks.length}
+                        onEdit={() => setEditingColumn(column)}
+                        ref={provided.innerRef}
+                        {...provided.droppableProps}
+                      >
+                        {columnTasks.map((task, index) => (
                           <Draggable
                             key={task.id}
                             draggableId={task.id}
@@ -94,32 +90,28 @@ export default function Board() {
                                 {...provided.draggableProps}
                                 {...provided.dragHandleProps}
                               >
-                                <TaskCard task={task} columnId={column.id} />
+                                <TaskCard task={task} />
                               </div>
                             )}
                           </Draggable>
-                        );
-                      })}
-                      {provided.placeholder}
-                    </BoardView>
-                  )}
-                </Droppable>
-              ))}
+                        ))}
+                        {provided.placeholder}
+                      </BoardView>
+                    )}
+                  </Droppable>
+                );
+              })}
             </div>
           ) : (
-            // List view
             <div className="flex h-full flex-col gap-4 overflow-y-auto">
               {columns.map((column) => {
-                // Only show tasks that pass filters
-                const colTasks = column.taskIds
-                  .map(getTaskById)
-                  .filter((task) => task !== undefined);
+                const columnTasks = getColumnTasks(column.id);
 
                 return (
                   <ListView
                     key={column.id}
                     title={column.title}
-                    countTasks={colTasks.length}
+                    countTasks={columnTasks.length}
                     onEdit={() => setEditingColumn(column)}
                   >
                     <Droppable droppableId={column.id}>
@@ -129,7 +121,7 @@ export default function Board() {
                           {...provided.droppableProps}
                           className="flex min-h-[40px] flex-col gap-2.5"
                         >
-                          {colTasks.map((task, index) => (
+                          {columnTasks.map((task, index) => (
                             <Draggable
                               key={task.id}
                               draggableId={task.id}
@@ -141,7 +133,7 @@ export default function Board() {
                                   {...provided.draggableProps}
                                   {...provided.dragHandleProps}
                                 >
-                                  <TaskCard task={task} columnId={column.id} />
+                                  <TaskCard task={task} />
                                 </div>
                               )}
                             </Draggable>
